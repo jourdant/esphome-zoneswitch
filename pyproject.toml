@@ -1,0 +1,9 @@
+[project]
+name = "zoneswitch-tools"
+version = "0.1.0"
+description = "Utilities for Polyaire ZoneSwitch reverse engineering"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv]
+package = false

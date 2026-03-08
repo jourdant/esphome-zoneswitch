@@ -1,0 +1,272 @@
+uart:
+  id: zs_uart
+  rx_pin: GPIO03
+  tx_pin: GPIO04
+  flow_control_pin: GPIO05
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+
+globals:
+  - id: zs_mask
+    type: uint8_t
+    restore_value: no
+    initial_value: '0'
+  - id: zs_desired_mask
+    type: uint8_t
+    restore_value: no
+    initial_value: '0'
+  - id: zs_last_seq
+    type: uint8_t
+    restore_value: no
+    initial_value: '0'
+  - id: zs_tx_seq
+    type: uint8_t
+    restore_value: no
+    initial_value: '1'
+  - id: zs_rx_ok
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: zs_rx_bad
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+script:
+  - id: zs_send_frame
+    parameters:
+      dst: int
+      src: int
+      seq: int
+      cmd: int
+      arg0: int
+      arg1: int
+    then:
+      - uart.write:
+          id: zs_uart
+          data: !lambda |-
+            std::vector<uint8_t> out;
+            out.reserve(9);
+            uint8_t b0 = 0xAA;
+            uint8_t b1 = (uint8_t) dst;
+            uint8_t b2 = (uint8_t) src;
+            uint8_t b3 = (uint8_t) seq;
+            uint8_t b4 = (uint8_t) cmd;
+            uint8_t b5 = (uint8_t) arg0;
+            uint8_t b6 = (uint8_t) arg1;
+            uint8_t chk = b1 ^ b2 ^ b3 ^ b4 ^ b5 ^ b6;
+            uint8_t b8 = 0x55;
+            out.push_back(b0);
+            out.push_back(b1);
+            out.push_back(b2);
+            out.push_back(b3);
+            out.push_back(b4);
+            out.push_back(b5);
+            out.push_back(b6);
+            out.push_back(chk);
+            out.push_back(b8);
+            return out;
+
+  - id: zs_poll
+    then:
+      - script.execute:
+          id: zs_send_frame
+          dst: 0x00
+          src: 0xB4
+          seq: !lambda return id(zs_tx_seq)++;
+          cmd: 0x01
+          arg0: 0x00
+          arg1: 0x00
+
+  - id: zs_write_mask
+    then:
+      - script.execute:
+          id: zs_send_frame
+          dst: 0x00
+          src: 0xB4
+          seq: !lambda return id(zs_tx_seq)++;
+          cmd: 0x02
+          arg0: !lambda return id(zs_desired_mask);
+          arg1: 0x00
+
+interval:
+  - interval: 50ms
+    then:
+      - lambda: |-
+          static uint8_t buf[9];
+          static uint8_t idx = 0;
+          while (id(zs_uart).available()) {
+            uint8_t b;
+            if (!id(zs_uart).read_byte(&b)) {
+              break;
+            }
+            if (idx == 0 && b != 0xAA) {
+              continue;
+            }
+            buf[idx++] = b;
+            if (idx < 9) {
+              continue;
+            }
+            idx = 0;
+            if (buf[0] != 0xAA || buf[8] != 0x55) {
+              id(zs_rx_bad)++;
+              continue;
+            }
+            id(zs_rx_ok)++;
+            if (buf[1] == 0xB4 && buf[2] == 0x00 && buf[4] == 0x81 && buf[5] == 0x01) {
+              id(zs_last_seq) = buf[3];
+              id(zs_mask) = buf[6] & 0x3F;
+              id(zs_desired_mask) = id(zs_mask);
+              id(zs_last_seq_sensor).publish_state(id(zs_last_seq));
+              id(zs_mask_sensor).publish_state(id(zs_mask));
+              id(zs_rx_ok_sensor).publish_state(id(zs_rx_ok));
+              id(zs_rx_bad_sensor).publish_state(id(zs_rx_bad));
+              id(zone_1_active).publish_state((id(zs_mask) & 0x01) != 0);
+              id(zone_2_active).publish_state((id(zs_mask) & 0x02) != 0);
+              id(zone_3_active).publish_state((id(zs_mask) & 0x04) != 0);
+              id(zone_4_active).publish_state((id(zs_mask) & 0x08) != 0);
+              id(zone_5_active).publish_state((id(zs_mask) & 0x10) != 0);
+              id(zone_6_active).publish_state((id(zs_mask) & 0x20) != 0);
+            }
+          }
+
+  - interval: 5s
+    then:
+      - script.execute: zs_poll
+
+sensor:
+  - platform: template
+    id: zs_last_seq_sensor
+    name: ZoneSwitch Last Sequence
+    lambda: return id(zs_last_seq);
+    update_interval: never
+
+  - platform: template
+    id: zs_mask_sensor
+    name: ZoneSwitch Raw Mask
+    lambda: return id(zs_mask);
+    update_interval: never
+
+  - platform: template
+    id: zs_rx_ok_sensor
+    name: ZoneSwitch RX OK
+    lambda: return id(zs_rx_ok);
+    update_interval: never
+
+  - platform: template
+    id: zs_rx_bad_sensor
+    name: ZoneSwitch RX Bad
+    lambda: return id(zs_rx_bad);
+    update_interval: never
+
+binary_sensor:
+  - platform: template
+    id: zone_1_active
+    name: Zone 1 Active
+    lambda: return (id(zs_mask) & 0x01) != 0;
+
+  - platform: template
+    id: zone_2_active
+    name: Zone 2 Active
+    lambda: return (id(zs_mask) & 0x02) != 0;
+
+  - platform: template
+    id: zone_3_active
+    name: Zone 3 Active
+    lambda: return (id(zs_mask) & 0x04) != 0;
+
+  - platform: template
+    id: zone_4_active
+    name: Zone 4 Active
+    lambda: return (id(zs_mask) & 0x08) != 0;
+
+  - platform: template
+    id: zone_5_active
+    name: Zone 5 Active
+    lambda: return (id(zs_mask) & 0x10) != 0;
+
+  - platform: template
+    id: zone_6_active
+    name: Zone 6 Active
+    lambda: return (id(zs_mask) & 0x20) != 0;
+
+switch:
+  - platform: template
+    id: zone_1_switch
+    name: Zone 1
+    optimistic: true
+    lambda: return (id(zs_mask) & 0x01) != 0;
+    turn_on_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x01;
+      - script.execute: zs_write_mask
+    turn_off_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x01;
+      - script.execute: zs_write_mask
+
+  - platform: template
+    id: zone_2_switch
+    name: Zone 2
+    optimistic: true
+    lambda: return (id(zs_mask) & 0x02) != 0;
+    turn_on_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x02;
+      - script.execute: zs_write_mask
+    turn_off_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x02;
+      - script.execute: zs_write_mask
+
+  - platform: template
+    id: zone_3_switch
+    name: Zone 3
+    optimistic: true
+    lambda: return (id(zs_mask) & 0x04) != 0;
+    turn_on_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x04;
+      - script.execute: zs_write_mask
+    turn_off_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x04;
+      - script.execute: zs_write_mask
+
+  - platform: template
+    id: zone_4_switch
+    name: Zone 4
+    optimistic: true
+    lambda: return (id(zs_mask) & 0x08) != 0;
+    turn_on_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x08;
+      - script.execute: zs_write_mask
+    turn_off_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x08;
+      - script.execute: zs_write_mask
+
+  - platform: template
+    id: zone_5_switch
+    name: Zone 5
+    optimistic: true
+    lambda: return (id(zs_mask) & 0x10) != 0;
+    turn_on_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x10;
+      - script.execute: zs_write_mask
+    turn_off_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x10;
+      - script.execute: zs_write_mask
+
+  - platform: template
+    id: zone_6_switch
+    name: Zone 6
+    optimistic: true
+    lambda: return (id(zs_mask) & 0x20) != 0;
+    turn_on_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x20;
+      - script.execute: zs_write_mask
+    turn_off_action:
+      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x20;
+      - script.execute: zs_write_mask
+
+button:
+  - platform: template
+    name: ZoneSwitch Poll Now
+    on_press:
+      - script.execute: zs_poll

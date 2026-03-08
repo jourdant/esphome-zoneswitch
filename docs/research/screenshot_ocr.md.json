@@ -1,0 +1,3224 @@
+{
+  "status": "succeeded",
+  "createdDateTime": "2026-03-08T09:20:49Z",
+  "lastUpdatedDateTime": "2026-03-08T09:20:52Z",
+  "analyzeResult": {
+    "apiVersion": "2024-11-30",
+    "modelId": "prebuilt-layout",
+    "stringIndexType": "textElements",
+    "content": "# 3) Components\n\nNPUT: AC24V-50Hz 1RPM 2.5km\n\n-----\n\nNote: The second touchpad is optional.\n\nZONE SWITCH\nV 2\n\nCABLE WITH CENTRE\nLATCHED PLUG\n\nDAMPER MOTOR\n(BRIGHT GREEN)\nUP TO 6 DAMPER MOTORS\n\nZonemaster\n\n9\n\n\\-\n\n24VAC, 50HZ\n\nN12051\n\nMADE IN CHINA\npolyaire\n\nwww.polyaire.com.au\n\nOPTIONAL\n\nLIVING\n\nTV ROOM\n\n24 VAC TRANSFORMER\n\nZONESWITCH V2\nMAIN CONTROL\nMODULE\n\nOFFICE\n\nACTIVITY\n\nBEDROOM 2\n\nBEDROOM 1\n\nCABLE WITH LEFT\nLATCHED PLUG\n\nTOUCHPAD 2\n\nLIVING\n\nTV ROOM\n\nOFFICE\n\nACTIVITY\n\nBEDROOM 2\n\nBEDROOM 1\n\nCABLE WITH LEFT\nLATCHED PLUG\n\nTOUCHPAD 1\n",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "angle": 0.05940417945384979,
+        "width": 2098,
+        "height": 1176,
+        "unit": "pixel",
+        "words": [
+          {
+            "content": "3)",
+            "polygon": [
+              63,
+              22,
+              116,
+              23,
+              116,
+              83,
+              63,
+              83
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 2,
+              "length": 2
+            }
+          },
+          {
+            "content": "Components",
+            "polygon": [
+              164,
+              23,
+              529,
+              25,
+              529,
+              80,
+              164,
+              83
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 5,
+              "length": 10
+            }
+          },
+          {
+            "content": "NPUT:",
+            "polygon": [
+              1716,
+              33,
+              1735,
+              29,
+              1736,
+              41,
+              1717,
+              44
+            ],
+            "confidence": 0.634,
+            "span": {
+              "offset": 17,
+              "length": 5
+            }
+          },
+          {
+            "content": "AC24V-50Hz",
+            "polygon": [
+              1737,
+              29,
+              1790,
+              27,
+              1790,
+              37,
+              1738,
+              40
+            ],
+            "confidence": 0.663,
+            "span": {
+              "offset": 23,
+              "length": 10
+            }
+          },
+          {
+            "content": "1RPM",
+            "polygon": [
+              1797,
+              27,
+              1820,
+              28,
+              1818,
+              40,
+              1796,
+              38
+            ],
+            "confidence": 0.961,
+            "span": {
+              "offset": 34,
+              "length": 4
+            }
+          },
+          {
+            "content": "2.5km",
+            "polygon": [
+              1824,
+              29,
+              1845,
+              33,
+              1843,
+              44,
+              1822,
+              40
+            ],
+            "confidence": 0.507,
+            "span": {
+              "offset": 39,
+              "length": 5
+            }
+          },
+          {
+            "content": "-----",
+            "polygon": [
+              1744,
+              57,
+              1814,
+              56,
+              1814,
+              64,
+              1744,
+              65
+            ],
+            "confidence": 0.509,
+            "span": {
+              "offset": 46,
+              "length": 5
+            }
+          },
+          {
+            "content": "Note:",
+            "polygon": [
+              156,
+              101,
+              293,
+              102,
+              293,
+              152,
+              156,
+              152
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 53,
+              "length": 5
+            }
+          },
+          {
+            "content": "The",
+            "polygon": [
+              304,
+              102,
+              389,
+              102,
+              389,
+              153,
+              304,
+              152
+            ],
+            "confidence": 0.999,
+            "span": {
+              "offset": 59,
+              "length": 3
+            }
+          },
+          {
+            "content": "second",
+            "polygon": [
+              405,
+              101,
+              577,
+              102,
+              577,
+              155,
+              405,
+              153
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 63,
+              "length": 6
+            }
+          },
+          {
+            "content": "touchpad",
+            "polygon": [
+              594,
+              102,
+              817,
+              102,
+              817,
+              156,
+              594,
+              155
+            ],
+            "confidence": 0.994,
+            "span": {
+              "offset": 70,
+              "length": 8
+            }
+          },
+          {
+            "content": "is",
+            "polygon": [
+              838,
+              102,
+              872,
+              102,
+              872,
+              156,
+              838,
+              156
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 79,
+              "length": 2
+            }
+          },
+          {
+            "content": "optional.",
+            "polygon": [
+              889,
+              102,
+              1093,
+              102,
+              1093,
+              156,
+              889,
+              156
+            ],
+            "confidence": 0.994,
+            "span": {
+              "offset": 82,
+              "length": 9
+            }
+          },
+          {
+            "content": "ZONE",
+            "polygon": [
+              698,
+              326,
+              748,
+              326,
+              748,
+              345,
+              698,
+              344
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 93,
+              "length": 4
+            }
+          },
+          {
+            "content": "SWITCH",
+            "polygon": [
+              754,
+              326,
+              823,
+              327,
+              823,
+              346,
+              754,
+              345
+            ],
+            "confidence": 0.993,
+            "span": {
+              "offset": 98,
+              "length": 6
+            }
+          },
+          {
+            "content": "V",
+            "polygon": [
+              739,
+              345,
+              753,
+              345,
+              753,
+              362,
+              739,
+              362
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 105,
+              "length": 1
+            }
+          },
+          {
+            "content": "2",
+            "polygon": [
+              758,
+              345,
+              770,
+              345,
+              770,
+              362,
+              758,
+              362
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 107,
+              "length": 1
+            }
+          },
+          {
+            "content": "CABLE",
+            "polygon": [
+              1098,
+              292,
+              1227,
+              292,
+              1227,
+              330,
+              1098,
+              330
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 110,
+              "length": 5
+            }
+          },
+          {
+            "content": "WITH",
+            "polygon": [
+              1239,
+              292,
+              1336,
+              291,
+              1336,
+              330,
+              1239,
+              330
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 116,
+              "length": 4
+            }
+          },
+          {
+            "content": "CENTRE",
+            "polygon": [
+              1350,
+              291,
+              1508,
+              292,
+              1508,
+              330,
+              1350,
+              330
+            ],
+            "confidence": 0.997,
+            "span": {
+              "offset": 121,
+              "length": 6
+            }
+          },
+          {
+            "content": "LATCHED",
+            "polygon": [
+              1153,
+              334,
+              1331,
+              333,
+              1331,
+              371,
+              1153,
+              371
+            ],
+            "confidence": 0.996,
+            "span": {
+              "offset": 128,
+              "length": 7
+            }
+          },
+          {
+            "content": "PLUG",
+            "polygon": [
+              1345,
+              333,
+              1452,
+              333,
+              1452,
+              371,
+              1345,
+              371
+            ],
+            "confidence": 0.985,
+            "span": {
+              "offset": 136,
+              "length": 4
+            }
+          },
+          {
+            "content": "DAMPER",
+            "polygon": [
+              1624,
+              280,
+              1790,
+              280,
+              1790,
+              318,
+              1624,
+              318
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 142,
+              "length": 6
+            }
+          },
+          {
+            "content": "MOTOR",
+            "polygon": [
+              1805,
+              280,
+              1949,
+              280,
+              1949,
+              318,
+              1805,
+              318
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 149,
+              "length": 5
+            }
+          },
+          {
+            "content": "(BRIGHT",
+            "polygon": [
+              1628,
+              319,
+              1787,
+              320,
+              1787,
+              359,
+              1628,
+              358
+            ],
+            "confidence": 0.994,
+            "span": {
+              "offset": 155,
+              "length": 7
+            }
+          },
+          {
+            "content": "GREEN)",
+            "polygon": [
+              1799,
+              320,
+              1945,
+              320,
+              1945,
+              359,
+              1799,
+              359
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 163,
+              "length": 6
+            }
+          },
+          {
+            "content": "UP",
+            "polygon": [
+              1529,
+              360,
+              1585,
+              360,
+              1585,
+              399,
+              1529,
+              398
+            ],
+            "confidence": 0.999,
+            "span": {
+              "offset": 170,
+              "length": 2
+            }
+          },
+          {
+            "content": "TO",
+            "polygon": [
+              1596,
+              360,
+              1648,
+              360,
+              1648,
+              399,
+              1596,
+              399
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 173,
+              "length": 2
+            }
+          },
+          {
+            "content": "6",
+            "polygon": [
+              1662,
+              360,
+              1682,
+              360,
+              1682,
+              399,
+              1662,
+              399
+            ],
+            "confidence": 0.994,
+            "span": {
+              "offset": 176,
+              "length": 1
+            }
+          },
+          {
+            "content": "DAMPER",
+            "polygon": [
+              1697,
+              359,
+              1859,
+              360,
+              1859,
+              399,
+              1697,
+              399
+            ],
+            "confidence": 0.993,
+            "span": {
+              "offset": 178,
+              "length": 6
+            }
+          },
+          {
+            "content": "MOTORS",
+            "polygon": [
+              1873,
+              360,
+              2044,
+              360,
+              2044,
+              399,
+              1873,
+              399
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 185,
+              "length": 6
+            }
+          },
+          {
+            "content": "Zonemaster",
+            "polygon": [
+              723,
+              296,
+              810,
+              298,
+              810,
+              313,
+              722,
+              311
+            ],
+            "confidence": 0.611,
+            "span": {
+              "offset": 193,
+              "length": 10
+            }
+          },
+          {
+            "content": "9",
+            "polygon": [
+              959,
+              309,
+              961,
+              326,
+              953,
+              329,
+              951,
+              314
+            ],
+            "confidence": 0.093,
+            "span": {
+              "offset": 205,
+              "length": 1
+            }
+          },
+          {
+            "content": "-",
+            "polygon": [
+              307,
+              329,
+              305,
+              386,
+              291,
+              386,
+              293,
+              329
+            ],
+            "confidence": 0.092,
+            "span": {
+              "offset": 208,
+              "length": 2
+            }
+          },
+          {
+            "content": "24VAC,",
+            "polygon": [
+              702,
+              365,
+              763,
+              366,
+              763,
+              384,
+              702,
+              383
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 212,
+              "length": 6
+            }
+          },
+          {
+            "content": "50HZ",
+            "polygon": [
+              769,
+              366,
+              814,
+              366,
+              814,
+              385,
+              769,
+              384
+            ],
+            "confidence": 0.989,
+            "span": {
+              "offset": 219,
+              "length": 4
+            }
+          },
+          {
+            "content": "N12051",
+            "polygon": [
+              743,
+              391,
+              781,
+              391,
+              781,
+              403,
+              743,
+              403
+            ],
+            "confidence": 0.994,
+            "span": {
+              "offset": 225,
+              "length": 6
+            }
+          },
+          {
+            "content": "MADE",
+            "polygon": [
+              703,
+              409,
+              745,
+              409,
+              745,
+              426,
+              703,
+              425
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 233,
+              "length": 4
+            }
+          },
+          {
+            "content": "IN",
+            "polygon": [
+              750,
+              410,
+              762,
+              410,
+              762,
+              426,
+              749,
+              426
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 238,
+              "length": 2
+            }
+          },
+          {
+            "content": "CHINA",
+            "polygon": [
+              766,
+              410,
+              812,
+              410,
+              811,
+              427,
+              766,
+              426
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 241,
+              "length": 5
+            }
+          },
+          {
+            "content": "polyaire",
+            "polygon": [
+              712,
+              429,
+              801,
+              428,
+              801,
+              446,
+              711,
+              446
+            ],
+            "confidence": 0.646,
+            "span": {
+              "offset": 247,
+              "length": 8
+            }
+          },
+          {
+            "content": "www.polyaire.com.au",
+            "polygon": [
+              705,
+              453,
+              808,
+              454,
+              808,
+              465,
+              705,
+              464
+            ],
+            "confidence": 0.962,
+            "span": {
+              "offset": 257,
+              "length": 19
+            }
+          },
+          {
+            "content": "OPTIONAL",
+            "polygon": [
+              1429,
+              451,
+              1638,
+              451,
+              1638,
+              488,
+              1429,
+              487
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 278,
+              "length": 8
+            }
+          },
+          {
+            "content": "LIVING",
+            "polygon": [
+              1733,
+              517,
+              1764,
+              517,
+              1764,
+              527,
+              1733,
+              527
+            ],
+            "confidence": 0.801,
+            "span": {
+              "offset": 288,
+              "length": 6
+            }
+          },
+          {
+            "content": "TV",
+            "polygon": [
+              1728,
+              542,
+              1739,
+              542,
+              1739,
+              553,
+              1728,
+              553
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 296,
+              "length": 2
+            }
+          },
+          {
+            "content": "ROOM",
+            "polygon": [
+              1741,
+              542,
+              1771,
+              542,
+              1771,
+              553,
+              1741,
+              553
+            ],
+            "confidence": 0.989,
+            "span": {
+              "offset": 299,
+              "length": 4
+            }
+          },
+          {
+            "content": "24",
+            "polygon": [
+              96,
+              566,
+              143,
+              566,
+              143,
+              604,
+              96,
+              604
+            ],
+            "confidence": 0.997,
+            "span": {
+              "offset": 305,
+              "length": 2
+            }
+          },
+          {
+            "content": "VAC",
+            "polygon": [
+              155,
+              566,
+              232,
+              565,
+              231,
+              604,
+              154,
+              604
+            ],
+            "confidence": 0.997,
+            "span": {
+              "offset": 308,
+              "length": 3
+            }
+          },
+          {
+            "content": "TRANSFORMER",
+            "polygon": [
+              242,
+              565,
+              544,
+              566,
+              544,
+              604,
+              242,
+              604
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 312,
+              "length": 11
+            }
+          },
+          {
+            "content": "ZONESWITCH",
+            "polygon": [
+              599,
+              565,
+              861,
+              566,
+              861,
+              604,
+              599,
+              603
+            ],
+            "confidence": 0.993,
+            "span": {
+              "offset": 325,
+              "length": 10
+            }
+          },
+          {
+            "content": "V2",
+            "polygon": [
+              874,
+              566,
+              923,
+              566,
+              923,
+              604,
+              873,
+              604
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 336,
+              "length": 2
+            }
+          },
+          {
+            "content": "MAIN",
+            "polygon": [
+              608,
+              607,
+              708,
+              606,
+              708,
+              644,
+              608,
+              643
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 339,
+              "length": 4
+            }
+          },
+          {
+            "content": "CONTROL",
+            "polygon": [
+              723,
+              606,
+              917,
+              606,
+              917,
+              644,
+              723,
+              644
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 344,
+              "length": 7
+            }
+          },
+          {
+            "content": "MODULE",
+            "polygon": [
+              676,
+              646,
+              850,
+              646,
+              850,
+              682,
+              676,
+              682
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 352,
+              "length": 6
+            }
+          },
+          {
+            "content": "OFFICE",
+            "polygon": [
+              1731,
+              568,
+              1765,
+              568,
+              1765,
+              578,
+              1731,
+              578
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 360,
+              "length": 6
+            }
+          },
+          {
+            "content": "ACTIVITY",
+            "polygon": [
+              1727,
+              594,
+              1770,
+              594,
+              1770,
+              604,
+              1727,
+              604
+            ],
+            "confidence": 0.981,
+            "span": {
+              "offset": 368,
+              "length": 8
+            }
+          },
+          {
+            "content": "BEDROOM",
+            "polygon": [
+              1724,
+              620,
+              1766,
+              620,
+              1766,
+              630,
+              1724,
+              630
+            ],
+            "confidence": 0.882,
+            "span": {
+              "offset": 378,
+              "length": 7
+            }
+          },
+          {
+            "content": "2",
+            "polygon": [
+              1768,
+              620,
+              1776,
+              620,
+              1776,
+              630,
+              1768,
+              630
+            ],
+            "confidence": 0.983,
+            "span": {
+              "offset": 386,
+              "length": 1
+            }
+          },
+          {
+            "content": "BEDROOM",
+            "polygon": [
+              1724,
+              646,
+              1766,
+              646,
+              1766,
+              656,
+              1724,
+              656
+            ],
+            "confidence": 0.955,
+            "span": {
+              "offset": 389,
+              "length": 7
+            }
+          },
+          {
+            "content": "1",
+            "polygon": [
+              1769,
+              646,
+              1776,
+              646,
+              1776,
+              656,
+              1769,
+              656
+            ],
+            "confidence": 0.947,
+            "span": {
+              "offset": 397,
+              "length": 1
+            }
+          },
+          {
+            "content": "CABLE",
+            "polygon": [
+              1120,
+              695,
+              1250,
+              695,
+              1249,
+              732,
+              1120,
+              732
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 400,
+              "length": 5
+            }
+          },
+          {
+            "content": "WITH",
+            "polygon": [
+              1262,
+              695,
+              1357,
+              695,
+              1357,
+              732,
+              1261,
+              732
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 406,
+              "length": 4
+            }
+          },
+          {
+            "content": "LEFT",
+            "polygon": [
+              1373,
+              695,
+              1465,
+              695,
+              1465,
+              732,
+              1373,
+              732
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 411,
+              "length": 4
+            }
+          },
+          {
+            "content": "LATCHED",
+            "polygon": [
+              1143,
+              736,
+              1321,
+              736,
+              1321,
+              772,
+              1142,
+              772
+            ],
+            "confidence": 0.996,
+            "span": {
+              "offset": 416,
+              "length": 7
+            }
+          },
+          {
+            "content": "PLUG",
+            "polygon": [
+              1336,
+              736,
+              1442,
+              737,
+              1442,
+              772,
+              1336,
+              772
+            ],
+            "confidence": 0.989,
+            "span": {
+              "offset": 424,
+              "length": 4
+            }
+          },
+          {
+            "content": "TOUCHPAD",
+            "polygon": [
+              1642,
+              737,
+              1861,
+              737,
+              1861,
+              775,
+              1642,
+              775
+            ],
+            "confidence": 0.995,
+            "span": {
+              "offset": 430,
+              "length": 8
+            }
+          },
+          {
+            "content": "2",
+            "polygon": [
+              1873,
+              737,
+              1897,
+              737,
+              1897,
+              775,
+              1873,
+              775
+            ],
+            "confidence": 0.996,
+            "span": {
+              "offset": 439,
+              "length": 1
+            }
+          },
+          {
+            "content": "LIVING",
+            "polygon": [
+              1733,
+              887,
+              1764,
+              887,
+              1764,
+              897,
+              1733,
+              897
+            ],
+            "confidence": 0.688,
+            "span": {
+              "offset": 442,
+              "length": 6
+            }
+          },
+          {
+            "content": "TV",
+            "polygon": [
+              1728,
+              913,
+              1739,
+              913,
+              1739,
+              923,
+              1728,
+              923
+            ],
+            "confidence": 0.986,
+            "span": {
+              "offset": 450,
+              "length": 2
+            }
+          },
+          {
+            "content": "ROOM",
+            "polygon": [
+              1741,
+              913,
+              1771,
+              913,
+              1771,
+              923,
+              1741,
+              923
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 453,
+              "length": 4
+            }
+          },
+          {
+            "content": "OFFICE",
+            "polygon": [
+              1730,
+              938,
+              1766,
+              938,
+              1766,
+              948,
+              1730,
+              948
+            ],
+            "confidence": 0.993,
+            "span": {
+              "offset": 459,
+              "length": 6
+            }
+          },
+          {
+            "content": "ACTIVITY",
+            "polygon": [
+              1728,
+              964,
+              1770,
+              964,
+              1770,
+              974,
+              1728,
+              974
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 467,
+              "length": 8
+            }
+          },
+          {
+            "content": "BEDROOM",
+            "polygon": [
+              1724,
+              990,
+              1766,
+              990,
+              1766,
+              1000,
+              1724,
+              1000
+            ],
+            "confidence": 0.876,
+            "span": {
+              "offset": 477,
+              "length": 7
+            }
+          },
+          {
+            "content": "2",
+            "polygon": [
+              1768,
+              990,
+              1776,
+              990,
+              1776,
+              1000,
+              1768,
+              1000
+            ],
+            "confidence": 0.991,
+            "span": {
+              "offset": 485,
+              "length": 1
+            }
+          },
+          {
+            "content": "BEDROOM",
+            "polygon": [
+              1724,
+              1016,
+              1766,
+              1015,
+              1766,
+              1026,
+              1724,
+              1026
+            ],
+            "confidence": 0.967,
+            "span": {
+              "offset": 488,
+              "length": 7
+            }
+          },
+          {
+            "content": "1",
+            "polygon": [
+              1769,
+              1015,
+              1776,
+              1015,
+              1776,
+              1026,
+              1769,
+              1026
+            ],
+            "confidence": 0.935,
+            "span": {
+              "offset": 496,
+              "length": 1
+            }
+          },
+          {
+            "content": "CABLE",
+            "polygon": [
+              1120,
+              1062,
+              1250,
+              1062,
+              1249,
+              1099,
+              1120,
+              1100
+            ],
+            "confidence": 0.998,
+            "span": {
+              "offset": 499,
+              "length": 5
+            }
+          },
+          {
+            "content": "WITH",
+            "polygon": [
+              1262,
+              1062,
+              1357,
+              1062,
+              1357,
+              1100,
+              1262,
+              1100
+            ],
+            "confidence": 0.989,
+            "span": {
+              "offset": 505,
+              "length": 4
+            }
+          },
+          {
+            "content": "LEFT",
+            "polygon": [
+              1374,
+              1062,
+              1466,
+              1062,
+              1466,
+              1100,
+              1374,
+              1100
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 510,
+              "length": 4
+            }
+          },
+          {
+            "content": "LATCHED",
+            "polygon": [
+              1143,
+              1104,
+              1321,
+              1103,
+              1321,
+              1141,
+              1143,
+              1140
+            ],
+            "confidence": 0.994,
+            "span": {
+              "offset": 515,
+              "length": 7
+            }
+          },
+          {
+            "content": "PLUG",
+            "polygon": [
+              1336,
+              1103,
+              1442,
+              1103,
+              1442,
+              1141,
+              1336,
+              1141
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 523,
+              "length": 4
+            }
+          },
+          {
+            "content": "TOUCHPAD",
+            "polygon": [
+              1646,
+              1106,
+              1865,
+              1106,
+              1865,
+              1145,
+              1646,
+              1145
+            ],
+            "confidence": 0.996,
+            "span": {
+              "offset": 529,
+              "length": 8
+            }
+          },
+          {
+            "content": "1",
+            "polygon": [
+              1879,
+              1106,
+              1898,
+              1106,
+              1898,
+              1145,
+              1879,
+              1145
+            ],
+            "confidence": 0.992,
+            "span": {
+              "offset": 538,
+              "length": 1
+            }
+          }
+        ],
+        "lines": [
+          {
+            "content": "3) Components",
+            "polygon": [
+              63,
+              22,
+              529,
+              24,
+              529,
+              83,
+              63,
+              82
+            ],
+            "spans": [
+              {
+                "offset": 2,
+                "length": 13
+              }
+            ]
+          },
+          {
+            "content": "NPUT: AC24V-50Hz 1RPM 2.5km",
+            "polygon": [
+              1716,
+              26,
+              1845,
+              26,
+              1845,
+              44,
+              1716,
+              44
+            ],
+            "spans": [
+              {
+                "offset": 17,
+                "length": 27
+              }
+            ]
+          },
+          {
+            "content": "-----",
+            "polygon": [
+              1743,
+              57,
+              1814,
+              56,
+              1814,
+              64,
+              1743,
+              65
+            ],
+            "spans": [
+              {
+                "offset": 46,
+                "length": 5
+              }
+            ]
+          },
+          {
+            "content": "Note: The second touchpad is optional.",
+            "polygon": [
+              156,
+              101,
+              1092,
+              102,
+              1092,
+              155,
+              156,
+              155
+            ],
+            "spans": [
+              {
+                "offset": 53,
+                "length": 38
+              }
+            ]
+          },
+          {
+            "content": "ZONE SWITCH",
+            "polygon": [
+              698,
+              326,
+              823,
+              327,
+              822,
+              346,
+              698,
+              344
+            ],
+            "spans": [
+              {
+                "offset": 93,
+                "length": 11
+              }
+            ]
+          },
+          {
+            "content": "V 2",
+            "polygon": [
+              739,
+              344,
+              770,
+              345,
+              769,
+              362,
+              739,
+              362
+            ],
+            "spans": [
+              {
+                "offset": 105,
+                "length": 3
+              }
+            ]
+          },
+          {
+            "content": "CABLE WITH CENTRE",
+            "polygon": [
+              1098,
+              291,
+              1507,
+              291,
+              1507,
+              329,
+              1098,
+              330
+            ],
+            "spans": [
+              {
+                "offset": 110,
+                "length": 17
+              }
+            ]
+          },
+          {
+            "content": "LATCHED PLUG",
+            "polygon": [
+              1153,
+              333,
+              1451,
+              333,
+              1451,
+              371,
+              1153,
+              371
+            ],
+            "spans": [
+              {
+                "offset": 128,
+                "length": 12
+              }
+            ]
+          },
+          {
+            "content": "DAMPER MOTOR",
+            "polygon": [
+              1624,
+              280,
+              1949,
+              280,
+              1949,
+              317,
+              1624,
+              317
+            ],
+            "spans": [
+              {
+                "offset": 142,
+                "length": 12
+              }
+            ]
+          },
+          {
+            "content": "(BRIGHT GREEN)",
+            "polygon": [
+              1628,
+              319,
+              1944,
+              320,
+              1944,
+              358,
+              1628,
+              358
+            ],
+            "spans": [
+              {
+                "offset": 155,
+                "length": 14
+              }
+            ]
+          },
+          {
+            "content": "UP TO 6 DAMPER MOTORS",
+            "polygon": [
+              1529,
+              359,
+              2043,
+              360,
+              2043,
+              399,
+              1529,
+              399
+            ],
+            "spans": [
+              {
+                "offset": 170,
+                "length": 21
+              }
+            ]
+          },
+          {
+            "content": "Zonemaster",
+            "polygon": [
+              723,
+              296,
+              809,
+              298,
+              809,
+              313,
+              722,
+              311
+            ],
+            "spans": [
+              {
+                "offset": 193,
+                "length": 10
+              }
+            ]
+          },
+          {
+            "content": "9",
+            "polygon": [
+              961,
+              309,
+              963,
+              327,
+              953,
+              328,
+              951,
+              310
+            ],
+            "spans": [
+              {
+                "offset": 205,
+                "length": 1
+              }
+            ]
+          },
+          {
+            "content": "-",
+            "polygon": [
+              307,
+              329,
+              305,
+              386,
+              292,
+              386,
+              293,
+              329
+            ],
+            "spans": [
+              {
+                "offset": 208,
+                "length": 2
+              }
+            ]
+          },
+          {
+            "content": "24VAC, 50HZ",
+            "polygon": [
+              702,
+              365,
+              813,
+              366,
+              813,
+              385,
+              702,
+              383
+            ],
+            "spans": [
+              {
+                "offset": 212,
+                "length": 11
+              }
+            ]
+          },
+          {
+            "content": "N12051",
+            "polygon": [
+              741,
+              391,
+              781,
+              391,
+              781,
+              403,
+              741,
+              403
+            ],
+            "spans": [
+              {
+                "offset": 225,
+                "length": 6
+              }
+            ]
+          },
+          {
+            "content": "MADE IN CHINA",
+            "polygon": [
+              703,
+              409,
+              811,
+              410,
+              811,
+              426,
+              703,
+              425
+            ],
+            "spans": [
+              {
+                "offset": 233,
+                "length": 13
+              }
+            ]
+          },
+          {
+            "content": "polyaire",
+            "polygon": [
+              711,
+              429,
+              801,
+              428,
+              801,
+              445,
+              711,
+              446
+            ],
+            "spans": [
+              {
+                "offset": 247,
+                "length": 8
+              }
+            ]
+          },
+          {
+            "content": "www.polyaire.com.au",
+            "polygon": [
+              705,
+              453,
+              807,
+              454,
+              807,
+              465,
+              705,
+              464
+            ],
+            "spans": [
+              {
+                "offset": 257,
+                "length": 19
+              }
+            ]
+          },
+          {
+            "content": "OPTIONAL",
+            "polygon": [
+              1429,
+              450,
+              1638,
+              450,
+              1638,
+              488,
+              1429,
+              487
+            ],
+            "spans": [
+              {
+                "offset": 278,
+                "length": 8
+              }
+            ]
+          },
+          {
+            "content": "LIVING",
+            "polygon": [
+              1733,
+              517,
+              1764,
+              517,
+              1764,
+              527,
+              1733,
+              527
+            ],
+            "spans": [
+              {
+                "offset": 288,
+                "length": 6
+              }
+            ]
+          },
+          {
+            "content": "TV ROOM",
+            "polygon": [
+              1726,
+              542,
+              1770,
+              542,
+              1771,
+              553,
+              1726,
+              553
+            ],
+            "spans": [
+              {
+                "offset": 296,
+                "length": 7
+              }
+            ]
+          },
+          {
+            "content": "24 VAC TRANSFORMER",
+            "polygon": [
+              96,
+              565,
+              543,
+              565,
+              543,
+              604,
+              96,
+              604
+            ],
+            "spans": [
+              {
+                "offset": 305,
+                "length": 18
+              }
+            ]
+          },
+          {
+            "content": "ZONESWITCH V2",
+            "polygon": [
+              599,
+              565,
+              922,
+              566,
+              922,
+              604,
+              599,
+              603
+            ],
+            "spans": [
+              {
+                "offset": 325,
+                "length": 13
+              }
+            ]
+          },
+          {
+            "content": "MAIN CONTROL",
+            "polygon": [
+              608,
+              606,
+              916,
+              606,
+              916,
+              644,
+              608,
+              643
+            ],
+            "spans": [
+              {
+                "offset": 339,
+                "length": 12
+              }
+            ]
+          },
+          {
+            "content": "MODULE",
+            "polygon": [
+              676,
+              646,
+              849,
+              646,
+              849,
+              682,
+              676,
+              682
+            ],
+            "spans": [
+              {
+                "offset": 352,
+                "length": 6
+              }
+            ]
+          },
+          {
+            "content": "OFFICE",
+            "polygon": [
+              1731,
+              568,
+              1765,
+              568,
+              1765,
+              578,
+              1731,
+              578
+            ],
+            "spans": [
+              {
+                "offset": 360,
+                "length": 6
+              }
+            ]
+          },
+          {
+            "content": "ACTIVITY",
+            "polygon": [
+              1727,
+              594,
+              1770,
+              594,
+              1770,
+              604,
+              1727,
+              604
+            ],
+            "spans": [
+              {
+                "offset": 368,
+                "length": 8
+              }
+            ]
+          },
+          {
+            "content": "BEDROOM 2",
+            "polygon": [
+              1722,
+              619,
+              1775,
+              620,
+              1775,
+              630,
+              1722,
+              630
+            ],
+            "spans": [
+              {
+                "offset": 378,
+                "length": 9
+              }
+            ]
+          },
+          {
+            "content": "BEDROOM 1",
+            "polygon": [
+              1722,
+              645,
+              1775,
+              646,
+              1775,
+              656,
+              1722,
+              656
+            ],
+            "spans": [
+              {
+                "offset": 389,
+                "length": 9
+              }
+            ]
+          },
+          {
+            "content": "CABLE WITH LEFT",
+            "polygon": [
+              1120,
+              695,
+              1465,
+              695,
+              1465,
+              732,
+              1120,
+              731
+            ],
+            "spans": [
+              {
+                "offset": 400,
+                "length": 15
+              }
+            ]
+          },
+          {
+            "content": "LATCHED PLUG",
+            "polygon": [
+              1142,
+              736,
+              1441,
+              736,
+              1441,
+              772,
+              1142,
+              772
+            ],
+            "spans": [
+              {
+                "offset": 416,
+                "length": 12
+              }
+            ]
+          },
+          {
+            "content": "TOUCHPAD 2",
+            "polygon": [
+              1642,
+              737,
+              1897,
+              737,
+              1897,
+              775,
+              1642,
+              775
+            ],
+            "spans": [
+              {
+                "offset": 430,
+                "length": 10
+              }
+            ]
+          },
+          {
+            "content": "LIVING",
+            "polygon": [
+              1733,
+              887,
+              1764,
+              887,
+              1764,
+              897,
+              1733,
+              897
+            ],
+            "spans": [
+              {
+                "offset": 442,
+                "length": 6
+              }
+            ]
+          },
+          {
+            "content": "TV ROOM",
+            "polygon": [
+              1725,
+              913,
+              1770,
+              912,
+              1770,
+              923,
+              1725,
+              923
+            ],
+            "spans": [
+              {
+                "offset": 450,
+                "length": 7
+              }
+            ]
+          },
+          {
+            "content": "OFFICE",
+            "polygon": [
+              1730,
+              938,
+              1765,
+              938,
+              1765,
+              948,
+              1730,
+              948
+            ],
+            "spans": [
+              {
+                "offset": 459,
+                "length": 6
+              }
+            ]
+          },
+          {
+            "content": "ACTIVITY",
+            "polygon": [
+              1727,
+              964,
+              1770,
+              964,
+              1770,
+              974,
+              1727,
+              974
+            ],
+            "spans": [
+              {
+                "offset": 467,
+                "length": 8
+              }
+            ]
+          },
+          {
+            "content": "BEDROOM 2",
+            "polygon": [
+              1722,
+              990,
+              1775,
+              990,
+              1776,
+              1000,
+              1722,
+              1000
+            ],
+            "spans": [
+              {
+                "offset": 477,
+                "length": 9
+              }
+            ]
+          },
+          {
+            "content": "BEDROOM 1",
+            "polygon": [
+              1722,
+              1015,
+              1776,
+              1015,
+              1776,
+              1026,
+              1722,
+              1026
+            ],
+            "spans": [
+              {
+                "offset": 488,
+                "length": 9
+              }
+            ]
+          },
+          {
+            "content": "CABLE WITH LEFT",
+            "polygon": [
+              1120,
+              1062,
+              1465,
+              1062,
+              1465,
+              1099,
+              1120,
+              1099
+            ],
+            "spans": [
+              {
+                "offset": 499,
+                "length": 15
+              }
+            ]
+          },
+          {
+            "content": "LATCHED PLUG",
+            "polygon": [
+              1143,
+              1103,
+              1442,
+              1103,
+              1442,
+              1140,
+              1143,
+              1140
+            ],
+            "spans": [
+              {
+                "offset": 515,
+                "length": 12
+              }
+            ]
+          },
+          {
+            "content": "TOUCHPAD 1",
+            "polygon": [
+              1646,
+              1106,
+              1897,
+              1106,
+              1897,
+              1144,
+              1646,
+              1144
+            ],
+            "spans": [
+              {
+                "offset": 529,
+                "length": 10
+              }
+            ]
+          }
+        ],
+        "spans": [
+          {
+            "offset": 0,
+            "length": 540
+          }
+        ]
+      }
+    ],
+    "paragraphs": [
+      {
+        "spans": [
+          {
+            "offset": 0,
+            "length": 15
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              63,
+              22,
+              529,
+              24,
+              529,
+              83,
+              63,
+              82
+            ]
+          }
+        ],
+        "role": "title",
+        "content": "3) Components"
+      },
+      {
+        "spans": [
+          {
+            "offset": 17,
+            "length": 27
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1716,
+              26,
+              1845,
+              26,
+              1845,
+              44,
+              1716,
+              44
+            ]
+          }
+        ],
+        "content": "NPUT: AC24V-50Hz 1RPM 2.5km"
+      },
+      {
+        "spans": [
+          {
+            "offset": 46,
+            "length": 5
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1743,
+              57,
+              1814,
+              56,
+              1814,
+              64,
+              1743,
+              65
+            ]
+          }
+        ],
+        "content": "-----"
+      },
+      {
+        "spans": [
+          {
+            "offset": 53,
+            "length": 38
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              156,
+              101,
+              1092,
+              102,
+              1092,
+              155,
+              156,
+              155
+            ]
+          }
+        ],
+        "content": "Note: The second touchpad is optional."
+      },
+      {
+        "spans": [
+          {
+            "offset": 93,
+            "length": 15
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              698,
+              326,
+              823,
+              327,
+              822,
+              363,
+              698,
+              361
+            ]
+          }
+        ],
+        "content": "ZONE SWITCH V 2"
+      },
+      {
+        "spans": [
+          {
+            "offset": 110,
+            "length": 30
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1098,
+              291,
+              1507,
+              291,
+              1507,
+              371,
+              1098,
+              371
+            ]
+          }
+        ],
+        "content": "CABLE WITH CENTRE LATCHED PLUG"
+      },
+      {
+        "spans": [
+          {
+            "offset": 142,
+            "length": 49
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1529,
+              280,
+              2043,
+              280,
+              2043,
+              399,
+              1529,
+              399
+            ]
+          }
+        ],
+        "content": "DAMPER MOTOR (BRIGHT GREEN) UP TO 6 DAMPER MOTORS"
+      },
+      {
+        "spans": [
+          {
+            "offset": 193,
+            "length": 10
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              723,
+              296,
+              809,
+              298,
+              809,
+              313,
+              722,
+              311
+            ]
+          }
+        ],
+        "content": "Zonemaster"
+      },
+      {
+        "spans": [
+          {
+            "offset": 205,
+            "length": 1
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              951,
+              310,
+              961,
+              309,
+              963,
+              327,
+              953,
+              328
+            ]
+          }
+        ],
+        "content": "9"
+      },
+      {
+        "spans": [
+          {
+            "offset": 208,
+            "length": 2
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              293,
+              329,
+              307,
+              329,
+              305,
+              386,
+              292,
+              386
+            ]
+          }
+        ],
+        "content": "-"
+      },
+      {
+        "spans": [
+          {
+            "offset": 212,
+            "length": 11
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              702,
+              365,
+              813,
+              366,
+              813,
+              385,
+              702,
+              383
+            ]
+          }
+        ],
+        "content": "24VAC, 50HZ"
+      },
+      {
+        "spans": [
+          {
+            "offset": 225,
+            "length": 6
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              741,
+              391,
+              781,
+              391,
+              781,
+              403,
+              741,
+              403
+            ]
+          }
+        ],
+        "content": "N12051"
+      },
+      {
+        "spans": [
+          {
+            "offset": 233,
+            "length": 22
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              703,
+              409,
+              811,
+              410,
+              811,
+              447,
+              703,
+              446
+            ]
+          }
+        ],
+        "content": "MADE IN CHINA polyaire"
+      },
+      {
+        "spans": [
+          {
+            "offset": 257,
+            "length": 19
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              705,
+              453,
+              807,
+              454,
+              807,
+              465,
+              705,
+              464
+            ]
+          }
+        ],
+        "content": "www.polyaire.com.au"
+      },
+      {
+        "spans": [
+          {
+            "offset": 278,
+            "length": 8
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1429,
+              450,
+              1638,
+              450,
+              1638,
+              488,
+              1429,
+              487
+            ]
+          }
+        ],
+        "content": "OPTIONAL"
+      },
+      {
+        "spans": [
+          {
+            "offset": 288,
+            "length": 6
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1733,
+              517,
+              1764,
+              517,
+              1764,
+              527,
+              1733,
+              527
+            ]
+          }
+        ],
+        "content": "LIVING"
+      },
+      {
+        "spans": [
+          {
+            "offset": 296,
+            "length": 7
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1726,
+              542,
+              1770,
+              542,
+              1771,
+              553,
+              1726,
+              553
+            ]
+          }
+        ],
+        "content": "TV ROOM"
+      },
+      {
+        "spans": [
+          {
+            "offset": 305,
+            "length": 18
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              96,
+              565,
+              543,
+              565,
+              543,
+              604,
+              96,
+              604
+            ]
+          }
+        ],
+        "content": "24 VAC TRANSFORMER"
+      },
+      {
+        "spans": [
+          {
+            "offset": 325,
+            "length": 33
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              599,
+              565,
+              922,
+              566,
+              922,
+              682,
+              599,
+              682
+            ]
+          }
+        ],
+        "content": "ZONESWITCH V2 MAIN CONTROL MODULE"
+      },
+      {
+        "spans": [
+          {
+            "offset": 360,
+            "length": 6
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1731,
+              568,
+              1765,
+              568,
+              1765,
+              578,
+              1731,
+              578
+            ]
+          }
+        ],
+        "content": "OFFICE"
+      },
+      {
+        "spans": [
+          {
+            "offset": 368,
+            "length": 8
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1727,
+              594,
+              1770,
+              594,
+              1770,
+              604,
+              1727,
+              604
+            ]
+          }
+        ],
+        "content": "ACTIVITY"
+      },
+      {
+        "spans": [
+          {
+            "offset": 378,
+            "length": 9
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1722,
+              619,
+              1775,
+              620,
+              1775,
+              630,
+              1722,
+              630
+            ]
+          }
+        ],
+        "content": "BEDROOM 2"
+      },
+      {
+        "spans": [
+          {
+            "offset": 389,
+            "length": 9
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1722,
+              645,
+              1775,
+              646,
+              1775,
+              656,
+              1722,
+              656
+            ]
+          }
+        ],
+        "content": "BEDROOM 1"
+      },
+      {
+        "spans": [
+          {
+            "offset": 400,
+            "length": 28
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1120,
+              695,
+              1465,
+              695,
+              1465,
+              772,
+              1120,
+              772
+            ]
+          }
+        ],
+        "content": "CABLE WITH LEFT LATCHED PLUG"
+      },
+      {
+        "spans": [
+          {
+            "offset": 430,
+            "length": 10
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1642,
+              737,
+              1897,
+              737,
+              1897,
+              775,
+              1642,
+              775
+            ]
+          }
+        ],
+        "content": "TOUCHPAD 2"
+      },
+      {
+        "spans": [
+          {
+            "offset": 442,
+            "length": 6
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1733,
+              887,
+              1764,
+              887,
+              1764,
+              897,
+              1733,
+              897
+            ]
+          }
+        ],
+        "content": "LIVING"
+      },
+      {
+        "spans": [
+          {
+            "offset": 450,
+            "length": 7
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1725,
+              913,
+              1770,
+              912,
+              1770,
+              923,
+              1725,
+              923
+            ]
+          }
+        ],
+        "content": "TV ROOM"
+      },
+      {
+        "spans": [
+          {
+            "offset": 459,
+            "length": 6
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1730,
+              938,
+              1765,
+              938,
+              1765,
+              948,
+              1730,
+              948
+            ]
+          }
+        ],
+        "content": "OFFICE"
+      },
+      {
+        "spans": [
+          {
+            "offset": 467,
+            "length": 8
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1727,
+              964,
+              1770,
+              964,
+              1770,
+              974,
+              1727,
+              974
+            ]
+          }
+        ],
+        "content": "ACTIVITY"
+      },
+      {
+        "spans": [
+          {
+            "offset": 477,
+            "length": 9
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1722,
+              990,
+              1775,
+              990,
+              1776,
+              1000,
+              1722,
+              1000
+            ]
+          }
+        ],
+        "content": "BEDROOM 2"
+      },
+      {
+        "spans": [
+          {
+            "offset": 488,
+            "length": 9
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1722,
+              1015,
+              1776,
+              1015,
+              1776,
+              1026,
+              1722,
+              1026
+            ]
+          }
+        ],
+        "content": "BEDROOM 1"
+      },
+      {
+        "spans": [
+          {
+            "offset": 499,
+            "length": 28
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1120,
+              1062,
+              1465,
+              1062,
+              1465,
+              1141,
+              1120,
+              1140
+            ]
+          }
+        ],
+        "content": "CABLE WITH LEFT LATCHED PLUG"
+      },
+      {
+        "spans": [
+          {
+            "offset": 529,
+            "length": 10
+          }
+        ],
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              1646,
+              1106,
+              1897,
+              1106,
+              1897,
+              1144,
+              1646,
+              1144
+            ]
+          }
+        ],
+        "content": "TOUCHPAD 1"
+      }
+    ],
+    "contentFormat": "markdown",
+    "sections": [
+      {
+        "spans": [
+          {
+            "offset": 0,
+            "length": 539
+          }
+        ],
+        "elements": [
+          "/paragraphs/0",
+          "/paragraphs/1",
+          "/paragraphs/2",
+          "/paragraphs/3",
+          "/paragraphs/4",
+          "/paragraphs/5",
+          "/paragraphs/6",
+          "/paragraphs/7",
+          "/paragraphs/8",
+          "/paragraphs/9",
+          "/paragraphs/10",
+          "/paragraphs/11",
+          "/paragraphs/12",
+          "/paragraphs/13",
+          "/paragraphs/14",
+          "/paragraphs/15",
+          "/paragraphs/16",
+          "/paragraphs/17",
+          "/paragraphs/18",
+          "/paragraphs/19",
+          "/paragraphs/20",
+          "/paragraphs/21",
+          "/paragraphs/22",
+          "/paragraphs/23",
+          "/paragraphs/24",
+          "/paragraphs/25",
+          "/paragraphs/26",
+          "/paragraphs/27",
+          "/paragraphs/28",
+          "/paragraphs/29",
+          "/paragraphs/30",
+          "/paragraphs/31",
+          "/paragraphs/32"
+        ]
+      }
+    ],
+    "figures": [
+      {
+        "id": "1.1",
+        "boundingRegions": [
+          {
+            "pageNumber": 1,
+            "polygon": [
+              47,
+              20,
+              2030,
+              19,
+              2030,
+              1146,
+              47,
+              1146
+            ]
+          }
+        ],
+        "spans": [
+          {
+            "offset": 0,
+            "length": 539
+          }
+        ],
+        "elements": [
+          "/paragraphs/0",
+          "/paragraphs/1",
+          "/paragraphs/2",
+          "/paragraphs/3",
+          "/paragraphs/4",
+          "/paragraphs/5",
+          "/paragraphs/6",
+          "/paragraphs/7",
+          "/paragraphs/8",
+          "/paragraphs/9",
+          "/paragraphs/10",
+          "/paragraphs/11",
+          "/paragraphs/12",
+          "/paragraphs/13",
+          "/paragraphs/14",
+          "/paragraphs/15",
+          "/paragraphs/16",
+          "/paragraphs/17",
+          "/paragraphs/18",
+          "/paragraphs/19",
+          "/paragraphs/20",
+          "/paragraphs/21",
+          "/paragraphs/22",
+          "/paragraphs/23",
+          "/paragraphs/24",
+          "/paragraphs/25",
+          "/paragraphs/26",
+          "/paragraphs/27",
+          "/paragraphs/28",
+          "/paragraphs/29",
+          "/paragraphs/30",
+          "/paragraphs/31",
+          "/paragraphs/32"
+        ]
+      }
+    ]
+  }
+}

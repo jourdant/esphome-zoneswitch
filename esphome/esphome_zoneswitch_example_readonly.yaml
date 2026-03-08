@@ -1,0 +1,109 @@
+uart:
+  id: zs_uart
+  rx_pin: GPIO03
+  tx_pin: GPIO04
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+
+globals:
+  - id: zs_mask
+    type: uint8_t
+    restore_value: no
+    initial_value: '0'
+  - id: zs_seq
+    type: uint8_t
+    restore_value: no
+    initial_value: '0'
+  - id: zs_rx_count
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+interval:
+  - interval: 50ms
+    then:
+      - lambda: |-
+          static uint8_t buf[9];
+          static uint8_t idx = 0;
+          while (id(zs_uart).available()) {
+            uint8_t b;
+            if (!id(zs_uart).read_byte(&b)) {
+              break;
+            }
+            if (idx == 0 && b != 0xAA) {
+              continue;
+            }
+            buf[idx++] = b;
+            if (idx == 9) {
+              idx = 0;
+              if (buf[0] != 0xAA || buf[8] != 0x55) {
+                continue;
+              }
+              id(zs_rx_count)++;
+              if (buf[1] == 0xB4 && buf[2] == 0x00 && buf[4] == 0x81 && buf[5] == 0x01) {
+                id(zs_seq) = buf[3];
+                id(zs_mask) = buf[6] & 0x3F;
+                id(zs_last_seq_sensor).publish_state(id(zs_seq));
+                id(zs_mask_sensor).publish_state(id(zs_mask));
+                id(zs_rx_frames_sensor).publish_state(id(zs_rx_count));
+                id(zone_1_active).publish_state((id(zs_mask) & 0x01) != 0);
+                id(zone_2_active).publish_state((id(zs_mask) & 0x02) != 0);
+                id(zone_3_active).publish_state((id(zs_mask) & 0x04) != 0);
+                id(zone_4_active).publish_state((id(zs_mask) & 0x08) != 0);
+                id(zone_5_active).publish_state((id(zs_mask) & 0x10) != 0);
+                id(zone_6_active).publish_state((id(zs_mask) & 0x20) != 0);
+              }
+            }
+          }
+
+sensor:
+  - platform: template
+    id: zs_last_seq_sensor
+    name: ZoneSwitch Last Sequence
+    lambda: return id(zs_seq);
+    update_interval: never
+
+  - platform: template
+    id: zs_mask_sensor
+    name: ZoneSwitch Raw Mask
+    lambda: return id(zs_mask);
+    update_interval: never
+
+  - platform: template
+    id: zs_rx_frames_sensor
+    name: ZoneSwitch RX Frames
+    lambda: return id(zs_rx_count);
+    update_interval: never
+
+binary_sensor:
+  - platform: template
+    id: zone_1_active
+    name: Zone 1 Active
+    lambda: return (id(zs_mask) & 0x01) != 0;
+
+  - platform: template
+    id: zone_2_active
+    name: Zone 2 Active
+    lambda: return (id(zs_mask) & 0x02) != 0;
+
+  - platform: template
+    id: zone_3_active
+    name: Zone 3 Active
+    lambda: return (id(zs_mask) & 0x04) != 0;
+
+  - platform: template
+    id: zone_4_active
+    name: Zone 4 Active
+    lambda: return (id(zs_mask) & 0x08) != 0;
+
+  - platform: template
+    id: zone_5_active
+    name: Zone 5 Active
+    lambda: return (id(zs_mask) & 0x10) != 0;
+
+  - platform: template
+    id: zone_6_active
+    name: Zone 6 Active
+    lambda: return (id(zs_mask) & 0x20) != 0;

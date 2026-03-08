@@ -1,0 +1,25 @@
+# Secrets
+.env
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# uv / virtual envs
+.venv/
+venv/
+
+# Editor
+.vscode/*
+!.vscode/.gitignore
