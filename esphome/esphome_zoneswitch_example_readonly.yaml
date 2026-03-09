@@ -42,7 +42,7 @@ interval:
                 continue;
               }
               id(zs_rx_count)++;
-              if (buf[1] == 0xB4 && buf[2] == 0x00 && buf[4] == 0x81 && buf[5] == 0x01) {
+              if (buf[2] == 0x00 && buf[4] == 0x81 && buf[5] == 0x01) {
                 id(zs_seq) = buf[3];
                 id(zs_mask) = buf[6] & 0x3F;
                 id(zs_last_seq_sensor).publish_state(id(zs_seq));

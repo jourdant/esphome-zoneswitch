@@ -6,6 +6,7 @@ This document combines:
 - Installation manual OCR: `ZoneSwitchV2_OpInstallationManual2015_12x17.md`
 - Diagram OCR: `screenshot_ocr.md`
 - Bus capture: `saved_rs485_packets.md`
+- Bus capture: `saved_rs485_packets2.md`
 
 Confidence legend:
 - **Confirmed**: directly observed in manual or packet data
@@ -46,16 +47,20 @@ Where:
 
 Two frame families repeat in request/response pairs:
 
-1) Poll-like request family:
-- `AA 00 B4 SEQ 01 00 00 CHK 55`
+1) Request family:
+- `AA 00 NODE SEQ 01 00 ARG1 CHK 55`
 
-2) Status-like response family:
-- `AA B4 00 SEQ 81 01 0C CHK 55`
+2) Status response family:
+- `AA NODE 00 SEQ 81 01 MASK CHK 55`
 
 High-confidence interpretation:
 - `DST/SRC` are swapped between request and response.
 - `SEQ` is copied from request to response.
 - `CMD` appears to be `0x01` (request) and `0x81` (response/ack).
+- `NODE` is a bus node/session address byte and is not a reliable static hardware ID.
+  - Capture set 1 used `NODE=0xB4`
+  - Capture set 2 (same physical system, different session) used `NODE=0x48`
+  - Practical implication: implementations should learn this address at runtime from responses.
 
 ## Timing and sequencing (confirmed)
 
@@ -63,16 +68,16 @@ High-confidence interpretation:
 - Each poll request is followed by one immediate response with same sequence.
 - Sequence observed from `0x66` to `0xC1` with one capture gap (`0x8E`..`0x96` not present), likely logging gap.
 
-## Zone state encoding (high-confidence inference)
+## Zone state encoding (confirmed)
 
-In the response family, byte `[6]` appears to carry zone-state bits.
+In the response family, byte `[6]` carries zone-state bits.
 
 Observed value in this capture:
 - Response `[6] = 0x0C` (binary `0000_1100`)
 
 Given capture context (“2 zones out of 6 were enabled”), this strongly suggests `[6]` is a **bitmask** with two set bits.
 
-Most likely mapping (hypothesis to verify):
+Bit mapping (validated by sequential button presses in `saved_rs485_packets2.md`):
 - bit0 -> Z1
 - bit1 -> Z2
 - bit2 -> Z3
@@ -82,11 +87,27 @@ Most likely mapping (hypothesis to verify):
 
 Under this mapping, `0x0C` means Z3 and Z4 ON.
 
+Validation from the new capture:
+- Starting from all-off (`MASK=0x00`), pressing Z1..Z6 yields masks:
+  - `0x01`, `0x03`, `0x07`, `0x0F`, `0x1F`, `0x3F`
+- Turning zones back off yields expected reverse masks.
+
+This confirms response byte `[6]` is the live zone mask.
+
+## Request ARG1 semantics (confirmed)
+
+From `saved_rs485_packets2.md`, request byte `[6]` (`ARG1`) is a zone-bit value:
+- `0x01`, `0x02`, `0x04`, `0x08`, `0x10`, `0x20` when a zone button is pressed
+- `0x00` for idle/status poll
+
+Interpretation: request `ARG1` is a **toggle event bit** (button-like semantics),
+not a full desired mask write.
+
 ## Checksum field (partially characterized)
 
 - Byte `[7]` is a checksum/integrity byte (confirmed).
 - It is **not** a simple XOR/sum/two’s-complement over obvious contiguous byte ranges.
-- `CHK_response XOR CHK_request = 0x8E` for paired request/response frames in this capture (confirmed).
+- It is also not a trivial affine function of `(SEQ, ARG1)`.
 
 Current state:
 - The checksum algorithm remains unresolved from passive idle capture alone.
@@ -103,12 +124,14 @@ Current state:
 
 This can be implemented immediately in ESPHome as read-only status.
 
-## Active control mode (requires additional reverse-engineering)
+## Active control mode (partially unlocked)
 
-To command zone on/off from ESPHome, these unknowns must be solved:
-- Outbound command opcode(s) for button-press/zone-set semantics.
-- Outbound payload semantics (zone index, desired state vs toggle).
-- Exact checksum algorithm.
+To command zone on/off from ESPHome, these items are now known:
+- Outbound command opcode uses request `CMD=0x01`.
+- Outbound payload uses `ARG1` as toggle-bit (zone button semantics).
+
+Still unknown:
+- Exact checksum algorithm for byte `[7]`.
 
 ## Touchpad2 emulation approach (high-confidence design)
 
@@ -147,5 +170,5 @@ Expected result:
 ## ESPHome deliverable split
 
 - **Phase 1**: read-only status integration (zone bitmask decode)
-- **Phase 2**: write support (zone switch entities)
+- **Phase 2**: write support with known command semantics (toggle bit), pending checksum implementation
 - **Phase 3**: full Touchpad2 emulation behavior parity (combos/LED behavior)

@@ -11,17 +11,21 @@ Create an ESPHome node on Touchpad port T2 that:
 
 From current decode confidence, implement now:
 - UART frame parser for fixed 9-byte frames
-- Response family recognition: `AA B4 00 SEQ 81 01 MASK CHK 55`
+- Response family recognition: `AA NODE 00 SEQ 81 01 MASK CHK 55`
 - `MASK` -> 6 binary sensors for zone state
 
 This does not require checksum generation because it is passive/read-only.
 
 ## What still needs reverse-engineering
 
-For write control, unknowns are:
-- Command opcode for zone control
-- Payload format (zone/state/toggle)
+For write control, remaining unknowns are:
 - Checksum algorithm
+
+Now validated from `saved_rs485_packets2.md`:
+- Request command family: `AA 00 NODE SEQ 01 00 ARG1 CHK 55`
+- `ARG1` is a zone toggle bit (`0x01..0x20`), not a full desired mask write
+- Response mask is live zone-state bitmask (`MASK`)
+- `NODE` should be treated as session-scoped and learned dynamically from traffic
 
 Until those are known, write entities should be disabled or marked experimental.
 
@@ -35,7 +39,8 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 
 1. `on_frame(frame)`:
    - Validate `len == 9`, `frame[0] == 0xAA`, `frame[8] == 0x55`
-   - If `frame[1]==0xB4 && frame[2]==0x00 && frame[4]==0x81 && frame[5]==0x01`:
+   - If `frame[2]==0x00 && frame[4]==0x81 && frame[5]==0x01`:
+    - `node_addr = frame[1]`
      - `zone_mask = frame[6]`
      - Publish zone states from bits 0..5
 
@@ -44,7 +49,8 @@ Use same UART settings as your known-good capture config. Keep transport half-du
    - Before checksum solve, rely on native bus traffic
 
 3. `set_zone(zone, on)`:
-   - Queue outbound command once command format/checksum solved
+  - If desired state differs from current state, send one toggle command (`ARG1 = zone_bit`)
+  - Requires checksum implementation to be active on-wire
 
 ## Proposed entity model
 

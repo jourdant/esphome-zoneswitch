@@ -9,11 +9,11 @@ uart:
   stop_bits: 1
 
 globals:
-  - id: zs_mask
+  - id: zs_dev_addr
     type: uint8_t
     restore_value: no
-    initial_value: '0'
-  - id: zs_desired_mask
+    initial_value: '0x48'
+  - id: zs_mask
     type: uint8_t
     restore_value: no
     initial_value: '0'
@@ -74,22 +74,24 @@ script:
       - script.execute:
           id: zs_send_frame
           dst: 0x00
-          src: 0xB4
+          src: !lambda return id(zs_dev_addr);
           seq: !lambda return id(zs_tx_seq)++;
           cmd: 0x01
           arg0: 0x00
           arg1: 0x00
 
-  - id: zs_write_mask
+  - id: zs_toggle_zone
+    parameters:
+      zone_bit: int
     then:
       - script.execute:
           id: zs_send_frame
           dst: 0x00
-          src: 0xB4
+          src: !lambda return id(zs_dev_addr);
           seq: !lambda return id(zs_tx_seq)++;
-          cmd: 0x02
-          arg0: !lambda return id(zs_desired_mask);
-          arg1: 0x00
+          cmd: 0x01
+          arg0: 0x00
+          arg1: !lambda return (uint8_t) zone_bit;
 
 interval:
   - interval: 50ms
@@ -115,10 +117,10 @@ interval:
               continue;
             }
             id(zs_rx_ok)++;
-            if (buf[1] == 0xB4 && buf[2] == 0x00 && buf[4] == 0x81 && buf[5] == 0x01) {
+            if (buf[2] == 0x00 && buf[4] == 0x81 && buf[5] == 0x01) {
+              id(zs_dev_addr) = buf[1];
               id(zs_last_seq) = buf[3];
               id(zs_mask) = buf[6] & 0x3F;
-              id(zs_desired_mask) = id(zs_mask);
               id(zs_last_seq_sensor).publish_state(id(zs_last_seq));
               id(zs_mask_sensor).publish_state(id(zs_mask));
               id(zs_rx_ok_sensor).publish_state(id(zs_rx_ok));
@@ -196,74 +198,128 @@ switch:
   - platform: template
     id: zone_1_switch
     name: Zone 1
-    optimistic: true
     lambda: return (id(zs_mask) & 0x01) != 0;
     turn_on_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x01;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x01) == 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x01
     turn_off_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x01;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x01) != 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x01
 
   - platform: template
     id: zone_2_switch
     name: Zone 2
-    optimistic: true
     lambda: return (id(zs_mask) & 0x02) != 0;
     turn_on_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x02;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x02) == 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x02
     turn_off_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x02;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x02) != 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x02
 
   - platform: template
     id: zone_3_switch
     name: Zone 3
-    optimistic: true
     lambda: return (id(zs_mask) & 0x04) != 0;
     turn_on_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x04;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x04) == 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x04
     turn_off_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x04;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x04) != 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x04
 
   - platform: template
     id: zone_4_switch
     name: Zone 4
-    optimistic: true
     lambda: return (id(zs_mask) & 0x08) != 0;
     turn_on_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x08;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x08) == 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x08
     turn_off_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x08;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x08) != 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x08
 
   - platform: template
     id: zone_5_switch
     name: Zone 5
-    optimistic: true
     lambda: return (id(zs_mask) & 0x10) != 0;
     turn_on_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x10;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x10) == 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x10
     turn_off_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x10;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x10) != 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x10
 
   - platform: template
     id: zone_6_switch
     name: Zone 6
-    optimistic: true
     lambda: return (id(zs_mask) & 0x20) != 0;
     turn_on_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) | 0x20;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x20) == 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x20
     turn_off_action:
-      - lambda: id(zs_desired_mask) = id(zs_desired_mask) & (uint8_t)~0x20;
-      - script.execute: zs_write_mask
+      - if:
+          condition:
+            lambda: return (id(zs_mask) & 0x20) != 0;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: 0x20
 
 button:
   - platform: template
