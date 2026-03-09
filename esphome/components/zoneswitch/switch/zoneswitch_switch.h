@@ -2,13 +2,14 @@
 
 #include "esphome/components/switch/switch.h"
 #include "esphome/core/component.h"
+#include "../zoneswitch.h"
 
 namespace esphome {
 namespace zoneswitch {
 
 class ZoneSwitch;
 
-class ZoneSwitchSwitch : public switch_::Switch, public Component {
+class ZoneSwitchSwitch : public switch_::Switch, public Component, public ZoneSwitchMaskListener {
  public:
   void set_parent(ZoneSwitch *parent) { this->parent_ = parent; }
   void set_zone(uint8_t zone) { this->zone_ = zone; }

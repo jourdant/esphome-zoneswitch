@@ -1,6 +1,4 @@
 #include "zoneswitch.h"
-#include "binary_sensor/zoneswitch_binary_sensor.h"
-#include "switch/zoneswitch_switch.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 
@@ -28,9 +26,11 @@ void ZoneSwitch::dump_config() {
   }
 }
 
-void ZoneSwitch::register_zone(ZoneSwitchBinarySensor *zone) { this->zones_.push_back(zone); }
+void ZoneSwitch::register_zone(ZoneSwitchMaskListener *zone) { this->zones_.push_back(zone); }
 
-void ZoneSwitch::register_switch(ZoneSwitchSwitch *zone_switch) { this->switches_.push_back(zone_switch); }
+void ZoneSwitch::register_switch(ZoneSwitchMaskListener *zone_switch) { this->switches_.push_back(zone_switch); }
+
+void ZoneSwitch::register_diagnostic(ZoneSwitchDiagnosticListener *diagnostic) { this->diagnostics_.push_back(diagnostic); }
 
 void ZoneSwitch::request_zone_state(uint8_t zone, bool target_on) {
   if (zone < 1 || zone > 6) {
@@ -83,6 +83,12 @@ void ZoneSwitch::publish_mask_(uint8_t mask) {
   }
 }
 
+void ZoneSwitch::publish_diagnostics_() {
+  for (auto *diagnostic : this->diagnostics_) {
+    diagnostic->on_diagnostics_update(this->node_addr_, this->online_);
+  }
+}
+
 uint8_t ZoneSwitch::get_tx_node_() const {
   return this->node_addr_ != 0 ? this->node_addr_ : this->tx_node_addr_;
 }
@@ -118,6 +124,8 @@ void ZoneSwitch::send_request_(uint8_t arg1) {
   if (this->debug_) {
     ESP_LOGD(TAG, "TX req: node=0x%02X seq=0x%02X arg1=0x%02X chk=0x%02X", node, frame[3], arg1, frame[7]);
   }
+
+  this->waiting_for_response_ = true;
 }
 
 void ZoneSwitch::run_poll_cycle_() {
@@ -130,6 +138,20 @@ void ZoneSwitch::run_poll_cycle_() {
     return;
   }
   this->last_poll_ms_ = now;
+
+  if (this->waiting_for_response_) {
+    if (this->consecutive_misses_ < 0xFF) {
+      this->consecutive_misses_++;
+    }
+
+    if (this->consecutive_misses_ >= this->offline_miss_threshold_ && this->online_) {
+      this->online_ = false;
+      if (this->debug_) {
+        ESP_LOGW(TAG, "Marked offline after %u missed responses", this->consecutive_misses_);
+      }
+      this->publish_diagnostics_();
+    }
+  }
 
   if (this->pending_desired_ && this->has_status_) {
     const uint8_t diff = (uint8_t) ((this->desired_mask_ ^ this->last_mask_) & 0x3F);
@@ -174,6 +196,9 @@ void ZoneSwitch::handle_frame_(const uint8_t *frame) {
 
   // Status response family: AA NODE 00 SEQ 81 01 MASK CHK 55
   if (frame[2] == 0x00 && frame[4] == 0x81 && frame[5] == 0x01) {
+    const uint8_t previous_node_addr = this->node_addr_;
+    const bool previous_online = this->online_;
+
     this->node_addr_ = frame[1];
     this->last_seq_ = frame[3];
     this->last_mask_ = frame[6] & 0x3F;
@@ -181,12 +206,19 @@ void ZoneSwitch::handle_frame_(const uint8_t *frame) {
       this->desired_mask_ = this->last_mask_;
     }
     this->has_status_ = true;
+    this->waiting_for_response_ = false;
+    this->consecutive_misses_ = 0;
+    this->online_ = true;
 
     if (this->debug_) {
       ESP_LOGD(TAG, "Status: node=0x%02X seq=0x%02X mask=0x%02X", this->node_addr_, this->last_seq_, this->last_mask_);
     }
 
     this->publish_mask_(this->last_mask_);
+
+    if (this->node_addr_ != previous_node_addr || this->online_ != previous_online) {
+      this->publish_diagnostics_();
+    }
   }
 }
 

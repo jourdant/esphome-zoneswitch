@@ -63,3 +63,19 @@ switch:
     zone: 6
     name: "Zone 6"
     icon: mdi:air-filter
+
+sensor:
+  - platform: zoneswitch
+    id: zoneswitch_node_address
+    zoneswitch_id: zs_bus
+    metric: node_address
+    name: "ZoneSwitch Node Address"
+    icon: mdi:identifier
+
+binary_sensor:
+  - platform: zoneswitch
+    id: zoneswitch_online_status
+    zoneswitch_id: zs_bus
+    metric: online
+    name: "ZoneSwitch Gateway Online"
+    icon: mdi:lan-connect

@@ -8,8 +8,17 @@
 namespace esphome {
 namespace zoneswitch {
 
-class ZoneSwitchBinarySensor;
-class ZoneSwitchSwitch;
+class ZoneSwitchMaskListener {
+ public:
+  virtual void on_mask_update(uint8_t mask) = 0;
+  virtual ~ZoneSwitchMaskListener() = default;
+};
+
+class ZoneSwitchDiagnosticListener {
+ public:
+  virtual void on_diagnostics_update(uint8_t node_addr, bool online) = 0;
+  virtual ~ZoneSwitchDiagnosticListener() = default;
+};
 
 class ZoneSwitch : public uart::UARTDevice, public Component {
  public:
@@ -17,8 +26,9 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   void dump_config() override;
   void loop() override;
 
-  void register_zone(ZoneSwitchBinarySensor *zone);
-  void register_switch(ZoneSwitchSwitch *zone_switch);
+  void register_zone(ZoneSwitchMaskListener *zone);
+  void register_switch(ZoneSwitchMaskListener *zone_switch);
+  void register_diagnostic(ZoneSwitchDiagnosticListener *diagnostic);
   void request_zone_state(uint8_t zone, bool target_on);
 
   void set_flow_control_pin(GPIOPin *flow_control_pin) { this->flow_control_pin_ = flow_control_pin; }
@@ -29,11 +39,13 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
 
   uint8_t get_last_mask() const { return this->last_mask_; }
   uint8_t get_node_addr() const { return this->node_addr_; }
+  bool is_online() const { return this->online_; }
 
  protected:
   static uint8_t crc8_maxim_(const uint8_t *data, size_t len);
   void handle_frame_(const uint8_t *frame);
   void publish_mask_(uint8_t mask);
+  void publish_diagnostics_();
   void run_poll_cycle_();
   void send_request_(uint8_t arg1);
   uint8_t get_tx_node_() const;
@@ -54,6 +66,11 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   bool has_status_{false};
   bool pending_desired_{false};
   bool enable_polling_{true};
+  bool online_{false};
+  bool waiting_for_response_{false};
+
+  uint8_t consecutive_misses_{0};
+  uint8_t offline_miss_threshold_{5};
 
   uint32_t poll_interval_ms_{5000};
   uint32_t last_poll_ms_{0};
@@ -61,8 +78,9 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint32_t rx_ok_count_{0};
   uint32_t rx_bad_count_{0};
 
-  std::vector<ZoneSwitchBinarySensor *> zones_;
-  std::vector<ZoneSwitchSwitch *> switches_;
+  std::vector<ZoneSwitchMaskListener *> zones_;
+  std::vector<ZoneSwitchMaskListener *> switches_;
+  std::vector<ZoneSwitchDiagnosticListener *> diagnostics_;
 };
 
 }  // namespace zoneswitch
