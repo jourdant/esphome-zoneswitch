@@ -1,0 +1,52 @@
+external_components:
+  - source:
+      type: git
+      url: https://github.com/jourdant/esphome-zoneswitch
+      ref: main
+    components: [ "zoneswitch" ]
+    refresh: 0s
+
+uart:
+  - id: zoneswitch_uart
+    rx_pin: GPIO03
+    tx_pin: GPIO04
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+
+zoneswitch:
+  - id: zs_bus
+    uart_id: zoneswitch_uart
+    debug: false
+
+binary_sensor:
+  - platform: zoneswitch
+    zoneswitch_id: zs_bus
+    zone: 1
+    name: "Zone 1 Active"
+
+  - platform: zoneswitch
+    zoneswitch_id: zs_bus
+    zone: 2
+    name: "Zone 2 Active"
+
+  - platform: zoneswitch
+    zoneswitch_id: zs_bus
+    zone: 3
+    name: "Zone 3 Active"
+
+  - platform: zoneswitch
+    zoneswitch_id: zs_bus
+    zone: 4
+    name: "Zone 4 Active"
+
+  - platform: zoneswitch
+    zoneswitch_id: zs_bus
+    zone: 5
+    name: "Zone 5 Active"
+
+  - platform: zoneswitch
+    zoneswitch_id: zs_bus
+    zone: 6
+    name: "Zone 6 Active"

@@ -69,6 +69,28 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 - If enabling TX, rate-limit writes and enforce inter-frame gap.
 - Preserve spill-function semantics; do not force all zones closed when spill is enabled.
 
+## Edge cases and safeguards
+
+1. Toggle-vs-state mismatch (highest priority)
+  - Protocol writes are toggle events, not absolute set-state commands.
+  - Safeguard: only transmit a toggle when desired state differs from current `zone_mask`.
+
+2. Session-scoped node address
+  - `NODE` can change between sessions.
+  - Safeguard: learn `node_addr` from valid inbound status frames before enabling writes.
+
+3. Bus collisions (physical touchpad + ESPHome)
+  - Concurrent writes can corrupt or drop frames.
+  - Safeguard: rate-limit writes, keep inter-frame gap, and re-check state after each write.
+
+4. Spill interaction
+  - Spill logic may force a zone open when others are closed.
+  - Safeguard: treat spill-forced state as authoritative and avoid repeated counter-writes.
+
+5. Startup uncertainty
+  - On boot, state may be unknown.
+  - Safeguard: block writes until first valid status frame initializes `zone_mask`.
+
 ## Wiring notes for T2 emulation
 
 - T1/T2 are documented as equivalent touchpad ports.

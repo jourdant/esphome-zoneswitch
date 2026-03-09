@@ -121,6 +121,21 @@ script:
           arg0: 0x00
           arg1: !lambda return (uint8_t) zone_bit;
 
+  - id: zs_set_zone_state
+    parameters:
+      zone_bit: int
+      target_on: bool
+    then:
+      - if:
+          condition:
+            lambda: |-
+              bool current_on = (id(zs_mask) & (uint8_t) zone_bit) != 0;
+              return current_on != target_on;
+          then:
+            - script.execute:
+                id: zs_toggle_zone
+                zone_bit: !lambda return zone_bit;
+
 interval:
   - interval: 50ms
     then:
@@ -228,126 +243,90 @@ switch:
     name: Zone 1
     lambda: return (id(zs_mask) & 0x01) != 0;
     turn_on_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x01) == 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x01
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x01
+          target_on: true
     turn_off_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x01) != 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x01
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x01
+          target_on: false
 
   - platform: template
     id: zone_2_switch
     name: Zone 2
     lambda: return (id(zs_mask) & 0x02) != 0;
     turn_on_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x02) == 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x02
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x02
+          target_on: true
     turn_off_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x02) != 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x02
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x02
+          target_on: false
 
   - platform: template
     id: zone_3_switch
     name: Zone 3
     lambda: return (id(zs_mask) & 0x04) != 0;
     turn_on_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x04) == 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x04
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x04
+          target_on: true
     turn_off_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x04) != 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x04
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x04
+          target_on: false
 
   - platform: template
     id: zone_4_switch
     name: Zone 4
     lambda: return (id(zs_mask) & 0x08) != 0;
     turn_on_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x08) == 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x08
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x08
+          target_on: true
     turn_off_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x08) != 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x08
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x08
+          target_on: false
 
   - platform: template
     id: zone_5_switch
     name: Zone 5
     lambda: return (id(zs_mask) & 0x10) != 0;
     turn_on_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x10) == 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x10
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x10
+          target_on: true
     turn_off_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x10) != 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x10
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x10
+          target_on: false
 
   - platform: template
     id: zone_6_switch
     name: Zone 6
     lambda: return (id(zs_mask) & 0x20) != 0;
     turn_on_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x20) == 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x20
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x20
+          target_on: true
     turn_off_action:
-      - if:
-          condition:
-            lambda: return (id(zs_mask) & 0x20) != 0;
-          then:
-            - script.execute:
-                id: zs_toggle_zone
-                zone_bit: 0x20
+      - script.execute:
+          id: zs_set_zone_state
+          zone_bit: 0x20
+          target_on: false
 
 button:
   - platform: template
