@@ -18,16 +18,14 @@ This does not require checksum generation because it is passive/read-only.
 
 ## What still needs reverse-engineering
 
-For write control, remaining unknowns are:
-- Checksum algorithm
-
 Now validated from `saved_rs485_packets2.md`:
 - Request command family: `AA 00 NODE SEQ 01 00 ARG1 CHK 55`
 - `ARG1` is a zone toggle bit (`0x01..0x20`), not a full desired mask write
 - Response mask is live zone-state bitmask (`MASK`)
 - `NODE` should be treated as session-scoped and learned dynamically from traffic
+- Checksum is CRC-8/MAXIM over bytes `[1..6]` (`DST..ARG1/MASK`)
 
-Until those are known, write entities should be disabled or marked experimental.
+Write entities can now be implemented with standard safety guards.
 
 ## Recommended ESPHome architecture
 
@@ -45,12 +43,12 @@ Use same UART settings as your known-good capture config. Keep transport half-du
      - Publish zone states from bits 0..5
 
 2. `request_status()`:
-   - Optional: send poll frame once checksum is solved
-   - Before checksum solve, rely on native bus traffic
+  - Optional: send poll frame using CRC-8/MAXIM
+  - Passive mode can still rely on native bus traffic
 
 3. `set_zone(zone, on)`:
   - If desired state differs from current state, send one toggle command (`ARG1 = zone_bit`)
-  - Requires checksum implementation to be active on-wire
+  - Compute checksum with CRC-8/MAXIM over bytes `[1..6]`
 
 ## Proposed entity model
 
@@ -66,7 +64,7 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 
 ## Safety and coexistence rules
 
-- Do not transmit until command encoding is validated.
+- Keep transmit disabled until runtime `node_addr` is learned from valid incoming responses.
 - Keep one authoritative poller on the bus to avoid collisions.
 - If enabling TX, rate-limit writes and enforce inter-frame gap.
 - Preserve spill-function semantics; do not force all zones closed when spill is enabled.
@@ -82,7 +80,7 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 
 - [ ] Validate bit-to-zone mapping with one-zone-at-a-time button tests
 - [ ] Capture write command(s) for zone toggle
-- [ ] Solve checksum algorithm from mixed traffic
+- [x] Solve checksum algorithm from mixed traffic
 - [ ] Implement ESPHome write path and HA switches
 - [ ] Validate coexistence with physical touchpad on T1
 - [ ] Validate spill-mode edge cases

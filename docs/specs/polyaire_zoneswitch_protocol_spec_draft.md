@@ -103,15 +103,12 @@ From `saved_rs485_packets2.md`, request byte `[6]` (`ARG1`) is a zone-bit value:
 Interpretation: request `ARG1` is a **toggle event bit** (button-like semantics),
 not a full desired mask write.
 
-## Checksum field (partially characterized)
+## Checksum field (confirmed)
 
-- Byte `[7]` is a checksum/integrity byte (confirmed).
-- It is **not** a simple XOR/sum/two’s-complement over obvious contiguous byte ranges.
-- It is also not a trivial affine function of `(SEQ, ARG1)`.
-
-Current state:
-- The checksum algorithm remains unresolved from passive idle capture alone.
-- Active captures with known control actions are needed to solve it robustly.
+- Byte `[7]` is a checksum/integrity byte.
+- Algorithm is **CRC-8/MAXIM** (`poly=0x31`, `init=0x00`, `refin=true`, `refout=true`, `xorout=0x00`).
+- Canonical input range is bytes `[1..6]` (`DST,SRC,SEQ,CMD,ARG0,ARG1/MASK`), i.e. excludes SOF/EOF/checksum bytes.
+- This model matched all frames from both captures (`saved_rs485_packets.md` and `saved_rs485_packets2.md`) with 100% accuracy.
 
 ## Practical protocol model for implementation
 
@@ -124,14 +121,12 @@ Current state:
 
 This can be implemented immediately in ESPHome as read-only status.
 
-## Active control mode (partially unlocked)
+## Active control mode (unlocked)
 
 To command zone on/off from ESPHome, these items are now known:
 - Outbound command opcode uses request `CMD=0x01`.
 - Outbound payload uses `ARG1` as toggle-bit (zone button semantics).
-
-Still unknown:
-- Exact checksum algorithm for byte `[7]`.
+- Outbound checksum uses CRC-8/MAXIM over bytes `[1..6]`.
 
 ## Touchpad2 emulation approach (high-confidence design)
 
@@ -170,5 +165,5 @@ Expected result:
 ## ESPHome deliverable split
 
 - **Phase 1**: read-only status integration (zone bitmask decode)
-- **Phase 2**: write support with known command semantics (toggle bit), pending checksum implementation
+- **Phase 2**: write support with known command semantics (toggle bit) and CRC-8/MAXIM checksum
 - **Phase 3**: full Touchpad2 emulation behavior parity (combos/LED behavior)
