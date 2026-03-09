@@ -17,7 +17,9 @@ Research and tooling for decoding the Polyaire ZoneSwitch V2 touchpad/main-modul
 - Draft protocol spec created and updated with validated request/response semantics.
 - Touchpad2 emulation plan created (staged passive -> active approach).
 - External ESPHome component scaffolded (`zoneswitch`) with assignable zone entities.
+- External ESPHome component now supports both per-zone status and per-zone switch control.
 - Read-only ESPHome example created for zone mask decoding.
+- RS485/ESPHome best-practices research consolidated and applied.
 - Azure Document Intelligence script added for reusable PDF/image OCR to Markdown.
 
 ## Key files
@@ -30,6 +32,7 @@ Research and tooling for decoding the Polyaire ZoneSwitch V2 touchpad/main-modul
 - Reverse-engineering outputs:
   - `docs/specs/polyaire_zoneswitch_protocol_spec_draft.md`
   - `docs/specs/esphome_zoneswitch_touchpad2_plan.md`
+  - `docs/research/rs485_esphome_best_practices.md`
 - ESPHome starter templates:
   - `esphome/esphome_zoneswitch_example_readonly.yaml`
   - `esphome/esphome_zoneswitch_example_readwrite.yaml`
@@ -53,12 +56,11 @@ From current captures:
 See the draft spec for exact byte-level detail and confidence labels.
 
 The `esphome/esphome_zoneswitch_example_readwrite.yaml` file includes passive
-decode and write controls with protocol-valid framing and checksum, but should
-still be treated as experimental pending broader live edge-case validation.
+decode and write controls with protocol-valid framing and checksum (CRC-8/MAXIM).
 
 ## ESPHome external component usage
 
-Use the new component to assign one or more zones and publish them as entities:
+Use the new component to assign one or more zones and publish/control them as entities:
 
 ```yaml
 external_components:
@@ -78,16 +80,20 @@ zoneswitch:
   - id: zs_bus
     uart_id: zoneswitch_uart
 
-binary_sensor:
+switch:
   - platform: zoneswitch
+    id: zone_1_switch
     zoneswitch_id: zs_bus
     zone: 1
-    name: "Zone 1 Active"
+    name: "Zone 1"
+    icon: mdi:air-filter
 
   - platform: zoneswitch
+    id: zone_2_switch
     zoneswitch_id: zs_bus
     zone: 2
-    name: "Zone 2 Active"
+    name: "Zone 2"
+    icon: mdi:air-filter
 ```
 
 For a complete example with all 6 zones, see
@@ -95,7 +101,7 @@ For a complete example with all 6 zones, see
 
 ## Next recommended capture set
 
-To unlock write control (zone on/off), collect button-action captures:
+To harden write behavior and edge-case handling further, collect button-action captures:
 
 - Press each zone once (then again)
 - Long-press spill-zone setting action

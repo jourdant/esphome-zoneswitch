@@ -19,34 +19,47 @@ zoneswitch:
   - id: zs_bus
     uart_id: zoneswitch_uart
     debug: false
+    enable_polling: true
 
-binary_sensor:
+switch:
   - platform: zoneswitch
+    id: zone_1_switch
     zoneswitch_id: zs_bus
     zone: 1
-    name: "Zone 1 Active"
+    name: "Zone 1"
+    icon: mdi:air-filter
 
   - platform: zoneswitch
+    id: zone_2_switch
     zoneswitch_id: zs_bus
     zone: 2
-    name: "Zone 2 Active"
+    name: "Zone 2"
+    icon: mdi:air-filter
 
   - platform: zoneswitch
+    id: zone_3_switch
     zoneswitch_id: zs_bus
     zone: 3
-    name: "Zone 3 Active"
+    name: "Zone 3"
+    icon: mdi:air-filter
 
   - platform: zoneswitch
+    id: zone_4_switch
     zoneswitch_id: zs_bus
     zone: 4
-    name: "Zone 4 Active"
+    name: "Zone 4"
+    icon: mdi:air-filter
 
   - platform: zoneswitch
+    id: zone_5_switch
     zoneswitch_id: zs_bus
     zone: 5
-    name: "Zone 5 Active"
+    name: "Zone 5"
+    icon: mdi:air-filter
 
   - platform: zoneswitch
+    id: zone_6_switch
     zoneswitch_id: zs_bus
     zone: 6
-    name: "Zone 6 Active"
+    name: "Zone 6"
+    icon: mdi:air-filter
