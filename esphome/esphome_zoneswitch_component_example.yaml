@@ -64,7 +64,7 @@ switch:
     name: "ZoneSwitch Zone 6"
     icon: mdi:air-filter
 
-sensor:
+text_sensor:
   - platform: zoneswitch
     id: zoneswitch_node_address
     zoneswitch_id: zs_bus
