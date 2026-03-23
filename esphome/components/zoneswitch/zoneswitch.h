@@ -67,6 +67,7 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   bool pending_desired_{false};
   bool enable_polling_{true};
   bool online_{false};
+  bool diagnostics_published_{false};
   bool waiting_for_response_{false};
 
   uint8_t consecutive_misses_{0};

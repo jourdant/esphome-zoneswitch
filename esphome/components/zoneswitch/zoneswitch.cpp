@@ -144,8 +144,9 @@ void ZoneSwitch::run_poll_cycle_() {
       this->consecutive_misses_++;
     }
 
-    if (this->consecutive_misses_ >= this->offline_miss_threshold_ && this->online_) {
+    if (this->consecutive_misses_ >= this->offline_miss_threshold_ && (this->online_ || !this->diagnostics_published_)) {
       this->online_ = false;
+      this->diagnostics_published_ = true;
       if (this->debug_) {
         ESP_LOGW(TAG, "Marked offline after %u missed responses", this->consecutive_misses_);
       }

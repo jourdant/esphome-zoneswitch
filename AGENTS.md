@@ -1,0 +1,1 @@
+Make sure you use uv when trying to run anything python code in this project.
