@@ -1,6 +1,7 @@
 #include "zoneswitch.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
+#include <cstring>
 
 namespace esphome {
 namespace zoneswitch {
@@ -17,6 +18,8 @@ void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "  Poll interval: %ums", this->poll_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Polling enabled: %s", YESNO(this->enable_polling_));
   ESP_LOGCONFIG(TAG, "  TX fallback node: 0x%02X", this->tx_node_addr_);
+  ESP_LOGCONFIG(TAG, "  Offline miss threshold: %u", this->offline_miss_threshold_);
+  ESP_LOGCONFIG(TAG, "  Spill zone guard: %u", this->spill_zone_);
   ESP_LOGCONFIG(TAG, "  Last node address: 0x%02X", this->node_addr_);
   ESP_LOGCONFIG(TAG, "  Last mask: 0x%02X", this->last_mask_);
   ESP_LOGCONFIG(TAG, "  RX ok: %u", this->rx_ok_count_);
@@ -85,7 +88,7 @@ void ZoneSwitch::publish_mask_(uint8_t mask) {
 
 void ZoneSwitch::publish_diagnostics_() {
   for (auto *diagnostic : this->diagnostics_) {
-    diagnostic->on_diagnostics_update(this->node_addr_, this->online_);
+    diagnostic->on_diagnostics_update(this->node_addr_, this->online_, this->rx_ok_count_, this->rx_bad_count_);
   }
 }
 
@@ -93,10 +96,20 @@ uint8_t ZoneSwitch::get_tx_node_() const {
   return this->node_addr_ != 0 ? this->node_addr_ : this->tx_node_addr_;
 }
 
-void ZoneSwitch::send_request_(uint8_t arg1) {
+bool ZoneSwitch::send_request_(uint8_t arg1) {
   const uint8_t node = this->get_tx_node_();
   if (node == 0x00) {
-    return;
+    if (this->debug_) {
+      ESP_LOGW(TAG, "Skipping TX because node address is 0x00");
+    }
+    return false;
+  }
+
+  if (this->available() > 0) {
+    if (this->debug_) {
+      ESP_LOGD(TAG, "Deferring TX because RX data is pending");
+    }
+    return false;
   }
 
   uint8_t frame[9];
@@ -109,6 +122,8 @@ void ZoneSwitch::send_request_(uint8_t arg1) {
   frame[6] = arg1;
   frame[7] = crc8_maxim_(&frame[1], 6);
   frame[8] = 0x55;
+  this->last_tx_seq_ = frame[3];
+  this->has_last_tx_seq_ = true;
 
   if (this->flow_control_pin_ != nullptr) {
     this->flow_control_pin_->digital_write(true);
@@ -118,6 +133,8 @@ void ZoneSwitch::send_request_(uint8_t arg1) {
   this->flush();
 
   if (this->flow_control_pin_ != nullptr) {
+    // Keep RS-485 DE asserted long enough for the last 9600-baud byte to leave the transceiver.
+    delay(10);
     this->flow_control_pin_->digital_write(false);
   }
 
@@ -126,6 +143,24 @@ void ZoneSwitch::send_request_(uint8_t arg1) {
   }
 
   this->waiting_for_response_ = true;
+  this->waiting_for_write_response_ = arg1 != 0x00;
+  return true;
+}
+
+uint8_t ZoneSwitch::apply_spill_guard_(uint8_t diff) const {
+  if (this->spill_zone_ < 1 || this->spill_zone_ > 6) {
+    return diff;
+  }
+
+  const uint8_t spill_bit = (uint8_t) (1 << (this->spill_zone_ - 1));
+  const uint8_t non_spill_mask = (uint8_t) (0x3F & (uint8_t) ~spill_bit);
+
+  if ((diff & spill_bit) && !(this->desired_mask_ & spill_bit) && (this->last_mask_ & spill_bit) &&
+      ((this->desired_mask_ & non_spill_mask) == 0)) {
+    return (uint8_t) (diff & (uint8_t) ~spill_bit);
+  }
+
+  return diff;
 }
 
 void ZoneSwitch::run_poll_cycle_() {
@@ -140,6 +175,10 @@ void ZoneSwitch::run_poll_cycle_() {
   this->last_poll_ms_ = now;
 
   if (this->waiting_for_response_) {
+    const bool missed_write = this->waiting_for_write_response_;
+    this->waiting_for_response_ = false;
+    this->waiting_for_write_response_ = false;
+
     if (this->consecutive_misses_ < 0xFF) {
       this->consecutive_misses_++;
     }
@@ -151,10 +190,21 @@ void ZoneSwitch::run_poll_cycle_() {
       }
       this->publish_diagnostics_();
     }
+
+    if (this->pending_desired_) {
+      this->require_fresh_status_before_write_ = true;
+    }
+
+    if (missed_write) {
+      if (this->debug_) {
+        ESP_LOGW(TAG, "Write response missed; waiting for fresh status before another toggle");
+      }
+      return;
+    }
   }
 
-  if (this->pending_desired_ && this->has_status_) {
-    const uint8_t diff = (uint8_t) ((this->desired_mask_ ^ this->last_mask_) & 0x3F);
+  if (this->pending_desired_ && this->has_status_ && this->online_ && !this->require_fresh_status_before_write_) {
+    const uint8_t diff = this->apply_spill_guard_((uint8_t) ((this->desired_mask_ ^ this->last_mask_) & 0x3F));
     if (diff != 0) {
       uint8_t toggle_bit = 0;
       for (uint8_t index = 0; index < 6; index++) {
@@ -177,10 +227,11 @@ void ZoneSwitch::run_poll_cycle_() {
   this->send_request_(0x00);
 }
 
-void ZoneSwitch::handle_frame_(const uint8_t *frame) {
+bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
   if (frame[0] != 0xAA || frame[8] != 0x55) {
     this->rx_bad_count_++;
-    return;
+    this->publish_diagnostics_();
+    return false;
   }
 
   uint8_t calc = crc8_maxim_(&frame[1], 6);
@@ -189,24 +240,31 @@ void ZoneSwitch::handle_frame_(const uint8_t *frame) {
     if (this->debug_) {
       ESP_LOGW(TAG, "Checksum mismatch. got=0x%02X expected=0x%02X", frame[7], calc);
     }
-    return;
+    this->publish_diagnostics_();
+    return false;
   }
 
   this->rx_ok_count_++;
 
   // Status response family: AA NODE 00 SEQ 81 01 MASK CHK 55
   if (frame[2] == 0x00 && frame[4] == 0x81 && frame[5] == 0x01) {
-    const uint8_t previous_node_addr = this->node_addr_;
-    const bool previous_online = this->online_;
+    const uint8_t previous_mask = this->last_mask_;
+    const bool previous_has_status = this->has_status_;
+
+    if (this->waiting_for_response_ && this->has_last_tx_seq_ && frame[3] != this->last_tx_seq_ && this->debug_) {
+      ESP_LOGW(TAG, "Response sequence mismatch. got=0x%02X expected=0x%02X", frame[3], this->last_tx_seq_);
+    }
 
     this->node_addr_ = frame[1];
     this->last_seq_ = frame[3];
     this->last_mask_ = frame[6] & 0x3F;
-    if (!this->has_status_) {
+    if (!this->has_status_ && !this->pending_desired_) {
       this->desired_mask_ = this->last_mask_;
     }
     this->has_status_ = true;
     this->waiting_for_response_ = false;
+    this->waiting_for_write_response_ = false;
+    this->require_fresh_status_before_write_ = false;
     this->consecutive_misses_ = 0;
     this->online_ = true;
 
@@ -214,12 +272,16 @@ void ZoneSwitch::handle_frame_(const uint8_t *frame) {
       ESP_LOGD(TAG, "Status: node=0x%02X seq=0x%02X mask=0x%02X", this->node_addr_, this->last_seq_, this->last_mask_);
     }
 
-    this->publish_mask_(this->last_mask_);
-
-    if (this->node_addr_ != previous_node_addr || this->online_ != previous_online) {
-      this->publish_diagnostics_();
+    if (!previous_has_status || this->last_mask_ != previous_mask) {
+      this->publish_mask_(this->last_mask_);
     }
+
+    this->publish_diagnostics_();
+  } else {
+    this->publish_diagnostics_();
   }
+
+  return true;
 }
 
 void ZoneSwitch::loop() {
@@ -241,8 +303,17 @@ void ZoneSwitch::loop() {
       continue;
     }
 
-    this->handle_frame_(this->rx_frame_);
+    const bool handled = this->handle_frame_(this->rx_frame_);
     this->rx_index_ = 0;
+    if (!handled) {
+      for (uint8_t index = 1; index < 9; index++) {
+        if (this->rx_frame_[index] == 0xAA) {
+          this->rx_index_ = 9 - index;
+          memmove(this->rx_frame_, &this->rx_frame_[index], this->rx_index_);
+          break;
+        }
+      }
+    }
   }
 }
 

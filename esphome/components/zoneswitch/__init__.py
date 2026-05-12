@@ -18,6 +18,18 @@ CONF_DEBUG = "debug"
 CONF_POLL_INTERVAL = "poll_interval"
 CONF_TX_NODE_ADDR = "tx_node_addr"
 CONF_ENABLE_POLLING = "enable_polling"
+CONF_OFFLINE_MISS_THRESHOLD = "offline_miss_threshold"
+CONF_SPILL_ZONE = "spill_zone"
+
+
+def _validate_poll_interval(value):
+    value = cv.positive_time_period_milliseconds(value)
+    total_milliseconds = value.total_milliseconds
+    if callable(total_milliseconds):
+        total_milliseconds = total_milliseconds()
+    if total_milliseconds < 500:
+        raise cv.Invalid("poll_interval must be at least 500ms")
+    return value
 
 CONFIG_SCHEMA = (
     uart.UART_DEVICE_SCHEMA.extend(
@@ -25,9 +37,11 @@ CONFIG_SCHEMA = (
             cv.GenerateID(): cv.declare_id(ZoneSwitch),
             cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
             cv.Optional(CONF_DEBUG, default=False): cv.boolean,
-            cv.Optional(CONF_POLL_INTERVAL, default="5000ms"): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_POLL_INTERVAL, default="5000ms"): _validate_poll_interval,
             cv.Optional(CONF_TX_NODE_ADDR, default=0x48): cv.int_range(min=0, max=255),
             cv.Optional(CONF_ENABLE_POLLING, default=True): cv.boolean,
+            cv.Optional(CONF_OFFLINE_MISS_THRESHOLD, default=5): cv.int_range(min=1, max=255),
+            cv.Optional(CONF_SPILL_ZONE, default=0): cv.int_range(min=0, max=6),
         }
     ).extend(cv.COMPONENT_SCHEMA)
 )
@@ -48,3 +62,5 @@ async def to_code(config):
     cg.add(var.set_poll_interval(config[CONF_POLL_INTERVAL]))
     cg.add(var.set_tx_node_addr(config[CONF_TX_NODE_ADDR]))
     cg.add(var.set_enable_polling(config[CONF_ENABLE_POLLING]))
+    cg.add(var.set_offline_miss_threshold(config[CONF_OFFLINE_MISS_THRESHOLD]))
+    cg.add(var.set_spill_zone(config[CONF_SPILL_ZONE]))

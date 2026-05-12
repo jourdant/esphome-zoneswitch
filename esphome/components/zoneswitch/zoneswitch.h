@@ -16,7 +16,7 @@ class ZoneSwitchMaskListener {
 
 class ZoneSwitchDiagnosticListener {
  public:
-  virtual void on_diagnostics_update(uint8_t node_addr, bool online) = 0;
+  virtual void on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count, uint32_t rx_bad_count) = 0;
   virtual ~ZoneSwitchDiagnosticListener() = default;
 };
 
@@ -36,6 +36,8 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   void set_poll_interval(uint32_t interval_ms) { this->poll_interval_ms_ = interval_ms; }
   void set_tx_node_addr(uint8_t tx_node_addr) { this->tx_node_addr_ = tx_node_addr; }
   void set_enable_polling(bool enable_polling) { this->enable_polling_ = enable_polling; }
+  void set_offline_miss_threshold(uint8_t threshold) { this->offline_miss_threshold_ = threshold; }
+  void set_spill_zone(uint8_t spill_zone) { this->spill_zone_ = spill_zone; }
 
   uint8_t get_last_mask() const { return this->last_mask_; }
   uint8_t get_node_addr() const { return this->node_addr_; }
@@ -43,12 +45,13 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
 
  protected:
   static uint8_t crc8_maxim_(const uint8_t *data, size_t len);
-  void handle_frame_(const uint8_t *frame);
+  bool handle_frame_(const uint8_t *frame);
   void publish_mask_(uint8_t mask);
   void publish_diagnostics_();
   void run_poll_cycle_();
-  void send_request_(uint8_t arg1);
+  bool send_request_(uint8_t arg1);
   uint8_t get_tx_node_() const;
+  uint8_t apply_spill_guard_(uint8_t diff) const;
 
   GPIOPin *flow_control_pin_{nullptr};
   bool debug_{false};
@@ -62,12 +65,17 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint8_t desired_mask_{0};
   uint8_t last_seq_{0};
   uint8_t tx_seq_{1};
+  uint8_t last_tx_seq_{0};
+  uint8_t spill_zone_{0};
 
   bool has_status_{false};
   bool pending_desired_{false};
   bool enable_polling_{true};
   bool online_{false};
   bool waiting_for_response_{false};
+  bool waiting_for_write_response_{false};
+  bool require_fresh_status_before_write_{false};
+  bool has_last_tx_seq_{false};
 
   uint8_t consecutive_misses_{0};
   uint8_t offline_miss_threshold_{5};

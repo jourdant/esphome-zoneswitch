@@ -10,6 +10,8 @@ namespace zoneswitch {
 enum DiagnosticMetric {
   DIAGNOSTIC_METRIC_NODE_ADDRESS = 0,
   DIAGNOSTIC_METRIC_ONLINE = 1,
+  DIAGNOSTIC_METRIC_RX_OK = 2,
+  DIAGNOSTIC_METRIC_RX_BAD = 3,
 };
 
 class ZoneSwitch;
@@ -19,7 +21,7 @@ class ZoneSwitchDiagnosticSensor : public sensor::Sensor, public Component, publ
   void set_parent(ZoneSwitch *parent) { this->parent_ = parent; }
   void set_metric(DiagnosticMetric metric) { this->metric_ = metric; }
 
-  void on_diagnostics_update(uint8_t node_addr, bool online) override;
+  void on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count, uint32_t rx_bad_count) override;
   void dump_config() override;
 
  protected:

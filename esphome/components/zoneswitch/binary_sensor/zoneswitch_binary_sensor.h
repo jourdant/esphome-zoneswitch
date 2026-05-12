@@ -24,8 +24,9 @@ class ZoneSwitchBinarySensor
   void set_zone(uint8_t zone) { this->zone_ = zone; }
   void set_type(BinarySensorMetric type) { this->type_ = type; }
   void on_mask_update(uint8_t mask) override;
-  void on_diagnostics_update(uint8_t node_addr, bool online) override;
+  void on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count, uint32_t rx_bad_count) override;
   void dump_config() override;
+  void setup() override;
 
  protected:
   ZoneSwitch *parent_{nullptr};
