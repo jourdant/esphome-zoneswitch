@@ -108,6 +108,10 @@ node address from valid status responses, exposes optional RX diagnostic counter
 (`metric: rx_ok` and `metric: rx_bad`), and suppresses repeated toggle writes
 until a fresh status frame confirms current hardware state.
 
+`tx_node_addr` is only a pre-learn fallback hint. Set it to `0` only for passive
+learning from existing touchpad traffic, because active polls are skipped until a
+valid response teaches the runtime node address.
+
 ## Next recommended capture set
 
 To harden write behavior and edge-case handling further, collect button-action captures:

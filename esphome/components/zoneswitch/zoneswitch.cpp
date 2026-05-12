@@ -133,6 +133,7 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
   this->flush();
 
   if (this->flow_control_pin_ != nullptr) {
+    // Keep RS-485 DE asserted long enough for the last 9600-baud byte to leave the transceiver.
     delay(10);
     this->flow_control_pin_->digital_write(false);
   }

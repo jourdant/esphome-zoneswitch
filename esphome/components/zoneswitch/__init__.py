@@ -24,7 +24,10 @@ CONF_SPILL_ZONE = "spill_zone"
 
 def _validate_poll_interval(value):
     value = cv.positive_time_period_milliseconds(value)
-    if value.total_milliseconds < 500:
+    total_milliseconds = value.total_milliseconds
+    if callable(total_milliseconds):
+        total_milliseconds = total_milliseconds()
+    if total_milliseconds < 500:
         raise cv.Invalid("poll_interval must be at least 500ms")
     return value
 
@@ -35,7 +38,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
             cv.Optional(CONF_DEBUG, default=False): cv.boolean,
             cv.Optional(CONF_POLL_INTERVAL, default="5000ms"): _validate_poll_interval,
-            cv.Optional(CONF_TX_NODE_ADDR, default=0x48): cv.int_range(min=1, max=255),
+            cv.Optional(CONF_TX_NODE_ADDR, default=0x48): cv.int_range(min=0, max=255),
             cv.Optional(CONF_ENABLE_POLLING, default=True): cv.boolean,
             cv.Optional(CONF_OFFLINE_MISS_THRESHOLD, default=5): cv.int_range(min=1, max=255),
             cv.Optional(CONF_SPILL_ZONE, default=0): cv.int_range(min=0, max=6),
