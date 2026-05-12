@@ -7,6 +7,8 @@ namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch.switch";
 
+void ZoneSwitchSwitch::setup() { this->publish_state(false); }
+
 void ZoneSwitchSwitch::dump_config() {
   LOG_SWITCH("", "ZoneSwitch Switch", this);
   ESP_LOGCONFIG(TAG, "  Zone: %u", this->zone_);

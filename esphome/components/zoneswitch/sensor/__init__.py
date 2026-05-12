@@ -14,6 +14,9 @@ CONF_METRIC = "metric"
 DiagnosticMetric = zoneswitch_ns.enum("DiagnosticMetric")
 DIAGNOSTIC_METRICS = {
     "node_address": DiagnosticMetric.DIAGNOSTIC_METRIC_NODE_ADDRESS,
+    "online": DiagnosticMetric.DIAGNOSTIC_METRIC_ONLINE,
+    "rx_ok": DiagnosticMetric.DIAGNOSTIC_METRIC_RX_OK,
+    "rx_bad": DiagnosticMetric.DIAGNOSTIC_METRIC_RX_BAD,
 }
 
 ZoneSwitchDiagnosticSensor = zoneswitch_ns.class_(
