@@ -79,6 +79,10 @@ uart:
 zoneswitch:
   - id: zs_bus
     uart_id: zoneswitch_uart
+    poll_interval: 5s
+    offline_miss_threshold: 5
+    # Optional: set to 1..6 if your controller has a known spill zone.
+    spill_zone: 0
 
 switch:
   - platform: zoneswitch
@@ -98,6 +102,11 @@ switch:
 
 For a complete example with all 6 zones, see
 `esphome/esphome_zoneswitch_component_example.yaml`.
+
+The component validates CRC-8/MAXIM on received frames, learns the session-scoped
+node address from valid status responses, exposes optional RX diagnostic counters
+(`metric: rx_ok` and `metric: rx_bad`), and suppresses repeated toggle writes
+until a fresh status frame confirms current hardware state.
 
 ## Next recommended capture set
 
