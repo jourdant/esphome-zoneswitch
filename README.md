@@ -63,6 +63,8 @@ zoneswitch:
     debug: false
     enable_polling: true
     poll_interval: 1s
+    tx_idle_guard: 20ms
+    node_confirmations: 3
     offline_miss_threshold: 5
     # Set to 1..6 if the controller has a known hardware spill zone.
     spill_zone: 0
@@ -164,8 +166,9 @@ binary_sensor:
 ## Key files
 
 - Research captures and OCR output:
-  - `docs/research/saved_rs485_packets.md`
-  - `docs/research/saved_rs485_packets2.md`
+  - `docs/research/protocol/saved_rs485_packets.md`
+  - `docs/research/protocol/saved_rs485_packets2.md`
+  - `docs/research/protocol/saved_rs485_packets3.md`
   - `docs/research/ZoneSwitchV2_OpInstallationManual2015_12x17.md`
   - `docs/research/screenshot_ocr.md`
 - Reverse-engineering outputs:
@@ -223,6 +226,8 @@ zoneswitch:
   - id: zs_bus
     uart_id: zoneswitch_uart
     poll_interval: 5s
+    tx_idle_guard: 20ms
+    node_confirmations: 3
     offline_miss_threshold: 5
     # Optional: set to 1..6 if your controller has a known spill zone.
     spill_zone: 0
@@ -251,9 +256,34 @@ node address from valid status responses, exposes optional RX diagnostic counter
 (`metric: rx_ok` and `metric: rx_bad`), and suppresses repeated toggle writes
 until a fresh status frame confirms current hardware state.
 
+Node learning is deliberately conservative: the first discovered node is exposed
+for diagnostics, but the component does not treat it as locked until it has seen
+`node_confirmations` matching status frames. Zone switch commands are ignored
+until a valid locked status frame initializes the live mask, so a Home Assistant
+command cannot be based on a stale or assumed all-off mask.
+
+Before transmitting, the component requires the UART RX side to have been idle
+for `tx_idle_guard` and then holds RS485 driver-enable asserted for a conservative
+post-`flush()` margin. ESPHome documents `flow_control_pin` as ESP32 RS485
+half-duplex support and documents `flush_timeout` for waiting on TX FIFO drain;
+there does not appear to be a public ESPHome custom-component TX-complete callback
+to use here, so the implemented guard is a conservative timing margin around
+`flush()`.
+
 `tx_node_addr` is only a pre-learn fallback hint. Set it to `0` only for passive
 learning from existing touchpad traffic, because active polls are skipped until a
 valid response teaches the runtime node address.
+
+For faster startup, there are three possible strategies:
+
+- Configure a known fallback with `tx_node_addr` when a site has repeatedly shown
+  a stable session node. This is fastest, but least conservative.
+- Use `tx_node_addr: 0` and rely on passive autodetection. This is safest, but it
+  waits for existing bus traffic before active polling can start.
+- Persist the last autodetected node and restore it on boot. This may save one
+  discovery cycle, but it needs explicit invalidation because the packet captures
+  show node addresses can change between sessions. This should be treated as a
+  future optimization rather than the default safety behavior.
 
 ## Next recommended capture set
 
@@ -266,4 +296,5 @@ To harden write behavior and edge-case handling further, collect button-action c
 - Touchpad-off combo (Z3 + Z4)
 - Capture with spill DIP OFF and ON
 
-These traces should allow command opcode and checksum resolution.
+These traces should harden active autodetection, coexistence, spill-mode, and
+touchpad-combo behavior. Command opcode and checksum are already decoded.
