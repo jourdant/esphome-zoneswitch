@@ -68,6 +68,10 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint8_t last_tx_seq_{0};
   uint8_t spill_zone_{0};
 
+  // Learned protocol variant: frame[5] value in status responses.
+  // 0x00 means not yet learned. Known variants: 0x01 (V1), 0x80 (V2).
+  uint8_t learned_arg0_{0x00};
+ 
   bool has_status_{false};
   bool pending_desired_{false};
   bool enable_polling_{true};

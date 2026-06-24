@@ -24,6 +24,11 @@ void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "  Last mask: 0x%02X", this->last_mask_);
   ESP_LOGCONFIG(TAG, "  RX ok: %u", this->rx_ok_count_);
   ESP_LOGCONFIG(TAG, "  RX bad: %u", this->rx_bad_count_);
+  if (this->learned_arg0_ != 0x00) {
+    ESP_LOGCONFIG(TAG, "  Protocol variant (frame[5]): 0x%02X", this->learned_arg0_);
+  } else {
+    ESP_LOGCONFIG(TAG, "  Protocol variant (frame[5]): not yet learned");
+  }
   if (this->flow_control_pin_ != nullptr) {
     ESP_LOGCONFIG(TAG, "  Flow control pin set");
   }
@@ -112,6 +117,10 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
     return false;
   }
 
+  // Use the learned ARG0 variant if known, otherwise fall back to 0x00 (the
+  // controller-side request value seen in all captures). The ARG0 in outbound
+  // requests is always 0x00 in captured data; learned_arg0_ is a response-side
+  // field and must NOT be used in TX frames.
   uint8_t frame[9];
   frame[0] = 0xAA;
   frame[1] = 0x00;
@@ -246,8 +255,35 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
 
   this->rx_ok_count_++;
 
-  // Status response family: AA NODE 00 SEQ 81 01 MASK CHK 55
-  if (frame[2] == 0x00 && frame[4] == 0x81 && frame[5] == 0x01) {
+  // Status response family: AA NODE 00 SEQ 0x81 <ARG0> MASK CHK 55
+  //
+  // frame[2] == 0x00 : SRC field is always 0x00 in controller responses
+  // frame[4] == 0x81 : CMD byte for response/ack (confirmed across all captures)
+  // frame[5]         : ARG0 — varies by firmware revision:
+  //                      0x01  original firmware (e.g. node 0x48)
+  //                      0x80  alternate firmware (e.g. node 0x0B)
+  //                    We learn this value from the first valid status response
+  //                    and lock on to it for the session so we don't accidentally
+  //                    misinterpret unrelated frame types.
+  if (frame[2] == 0x00 && frame[4] == 0x81) {
+    const uint8_t arg0 = frame[5];
+ 
+    // First time: learn whichever ARG0 variant the controller uses.
+    if (this->learned_arg0_ == 0x00) {
+      this->learned_arg0_ = arg0;
+      if (this->debug_) {
+        ESP_LOGD(TAG, "Learned protocol variant: frame[5]=0x%02X", arg0);
+      }
+    }
+ 
+    // Only process frames that match the learned variant.
+    if (arg0 != this->learned_arg0_) {
+      // Different ARG0 — not a status frame for this session; ignore silently.
+      this->publish_diagnostics_();
+      return true;
+    }
+
+    // Valid status response — process it.
     const uint8_t previous_mask = this->last_mask_;
     const bool previous_has_status = this->has_status_;
 
