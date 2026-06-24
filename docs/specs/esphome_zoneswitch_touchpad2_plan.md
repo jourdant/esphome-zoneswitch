@@ -25,6 +25,11 @@ Now validated from `saved_rs485_packets2.md`:
 - `NODE` should be treated as session-scoped and learned dynamically from traffic
 - Checksum is CRC-8/MAXIM over bytes `[1..6]` (`DST..ARG1/MASK`)
 
+Further checked against `saved_rs485_packets3.md`:
+- Component-generated idle polls for `NODE=0x48`, `SEQ=0x50..0x5D`, `ARG1=0x00` have valid CRC-8/MAXIM checksums.
+- The log shows `RX OK` increasing while `ZoneSwitch Node Address` stays `0`, but this capture predates the auto-detection PR. With that change applied, the node address should now update from valid discovered traffic.
+- Do not use the raw `RX OK` counter alone as proof that active polling is working. Use a learned non-zero node address, online status, and decoded mask updates as the success criteria.
+
 Write entities can now be implemented with standard safety guards.
 
 ## Recommended ESPHome architecture
@@ -37,18 +42,21 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 
 1. `on_frame(frame)`:
    - Validate `len == 9`, `frame[0] == 0xAA`, `frame[8] == 0x55`
-   - If `frame[2]==0x00 && frame[4]==0x81 && frame[5]==0x01`:
-    - `node_addr = frame[1]`
+   - If `frame[2]==0x00 && frame[4]==0x81`:
+     - Learn and lock the response-side `frame[5]`/`ARG0` value for the session.
+     - Current captures show `frame[5]==0x01` for status responses.
+     - `node_addr = frame[1]`
      - `zone_mask = frame[6]`
      - Publish zone states from bits 0..5
+   - Treat checksum-valid request frames as valid traffic only, not as status updates.
 
 2. `request_status()`:
-  - Optional: send poll frame using CRC-8/MAXIM
-  - Passive mode can still rely on native bus traffic
+   - Optional: send poll frame using CRC-8/MAXIM
+   - Passive mode can still rely on native bus traffic
 
 3. `set_zone(zone, on)`:
-  - If desired state differs from current state, send one toggle command (`ARG1 = zone_bit`)
-  - Compute checksum with CRC-8/MAXIM over bytes `[1..6]`
+   - If desired state differs from current state, send one toggle command (`ARG1 = zone_bit`)
+   - Compute checksum with CRC-8/MAXIM over bytes `[1..6]`
 
 ## Proposed entity model
 
@@ -68,6 +76,8 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 - Keep one authoritative poller on the bus to avoid collisions.
 - If enabling TX, rate-limit writes and enforce inter-frame gap.
 - Preserve spill-function semantics; do not force all zones closed when spill is enabled.
+- When validating active TX, confirm that the node-address diagnostic changes from `0` to the learned controller node. If only `RX OK` increments, debug transceiver direction/echo/collision behavior before sending zone toggles.
+- The `saved_rs485_packets3.md` node-address value of `0` should be treated as pre-auto-detection behavior, not a current protocol limitation.
 
 ## Edge cases and safeguards
 
@@ -100,9 +110,11 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 
 ## Completion checklist
 
-- [ ] Validate bit-to-zone mapping with one-zone-at-a-time button tests
-- [ ] Capture write command(s) for zone toggle
+- [x] Validate bit-to-zone mapping with one-zone-at-a-time button tests
+- [x] Capture write command(s) for zone toggle
 - [x] Solve checksum algorithm from mixed traffic
-- [ ] Implement ESPHome write path and HA switches
+- [x] Validate component-generated idle poll checksums against the checksum model
+- [ ] Retest active poll with auto-detection and confirm node address updates
+- [x] Implement ESPHome write path and HA switches
 - [ ] Validate coexistence with physical touchpad on T1
 - [ ] Validate spill-mode edge cases

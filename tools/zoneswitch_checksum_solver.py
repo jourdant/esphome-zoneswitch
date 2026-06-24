@@ -42,18 +42,28 @@ class Frame:
 
 
 def parse_capture(path: Path) -> list[Frame]:
-    lines = [line for line in path.read_text().splitlines() if "<<<" in line]
     frames: list[Frame] = []
 
-    for line in lines:
-        payload = line.split("<<<", 1)[1]
-        hexbytes = re.findall(r"\b[0-9A-F]{2}\b", payload)
-        vals = [int(value, 16) for value in hexbytes]
+    for line in path.read_text().splitlines():
+        if "<<<" in line:
+            payload = line.split("<<<", 1)[1]
+            hexbytes = re.findall(r"\b[0-9A-F]{2}\b", payload)
+            vals = [int(value, 16) for value in hexbytes]
 
-        for index in range(0, len(vals), 9):
-            chunk = vals[index : index + 9]
-            if len(chunk) == 9:
-                frames.append(Frame(raw=chunk, source_file=str(path)))
+            for index in range(0, len(vals), 9):
+                chunk = vals[index : index + 9]
+                if len(chunk) == 9:
+                    frames.append(Frame(raw=chunk, source_file=str(path)))
+
+            continue
+
+        tx_match = re.search(
+            r"TX req: node=0x([0-9A-F]{2}) seq=0x([0-9A-F]{2}) arg1=0x([0-9A-F]{2}) chk=0x([0-9A-F]{2})",
+            line,
+        )
+        if tx_match:
+            node, seq, arg1, chk = (int(value, 16) for value in tx_match.groups())
+            frames.append(Frame(raw=[0xAA, 0x00, node, seq, 0x01, 0x00, arg1, chk, 0x55], source_file=str(path)))
 
     return frames
 
@@ -173,12 +183,40 @@ def run_crc_search(frames: list[Frame], full: bool) -> list[str]:
 
 
 def summarize_pairs(frames: list[Frame]) -> str:
-    pairs = list(zip(frames[0::2], frames[1::2]))
+    pairs: list[tuple[Frame, Frame]] = []
+    unpaired = 0
+    index = 0
+
+    while index < len(frames):
+        request = frames[index]
+        if index + 1 >= len(frames):
+            unpaired += 1
+            index += 1
+            continue
+
+        response = frames[index + 1]
+        is_request = request.cmd == 0x01 and request.arg0 == 0x00
+        is_response = response.cmd == 0x81 and response.arg0 == 0x01
+        is_matching_pair = (
+            is_request
+            and is_response
+            and request.seq == response.seq
+            and request.dst == response.src
+            and request.src == response.dst
+        )
+
+        if is_matching_pair:
+            pairs.append((request, response))
+            index += 2
+        else:
+            unpaired += 1
+            index += 1
+
     same_seq = sum(1 for request, response in pairs if request.seq == response.seq)
     req_types = Counter((request.dst, request.src, request.cmd, request.arg0) for request, _ in pairs)
     rsp_types = Counter((response.dst, response.src, response.cmd, response.arg0) for _, response in pairs)
     return (
-        f"pairs={len(pairs)} same_seq={same_seq} "
+        f"pairs={len(pairs)} same_seq={same_seq} unpaired={unpaired} "
         f"req_types={dict(req_types)} rsp_types={dict(rsp_types)}"
     )
 
@@ -209,8 +247,9 @@ def main() -> int:
         "captures",
         nargs="*",
         default=[
-            "docs/research/saved_rs485_packets.md",
-            "docs/research/saved_rs485_packets2.md",
+            "docs/research/protocol/saved_rs485_packets.md",
+            "docs/research/protocol/saved_rs485_packets2.md",
+            "docs/research/protocol/saved_rs485_packets3.md",
         ],
         help="Capture markdown/text files containing UART hex lines.",
     )

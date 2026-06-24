@@ -52,6 +52,10 @@ From current captures:
 - Sequence byte is mirrored in response
 - Response payload includes a validated 6-bit zone mask
 - Checksum is validated as CRC-8/MAXIM over bytes `[1..6]`
+- Component-generated idle poll frames in `saved_rs485_packets3.md` also match
+  the checksum model. That capture predates the auto-detection PR, so its
+  `Node Address = 0` diagnostic should be retested; with auto-detection enabled,
+  valid discovered traffic should update the learned node address.
 
 See the draft spec for exact byte-level detail and confidence labels.
 
@@ -116,6 +120,8 @@ valid response teaches the runtime node address.
 
 To harden write behavior and edge-case handling further, collect button-action captures:
 
+- Active ESPHome TX with the auto-detection PR applied, confirming the learned
+  node address updates and controller status responses are decoded
 - Press each zone once (then again)
 - Long-press spill-zone setting action
 - Touchpad-off combo (Z3 + Z4)

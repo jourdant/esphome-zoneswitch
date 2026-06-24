@@ -7,6 +7,7 @@ This document combines:
 - Diagram OCR: `screenshot_ocr.md`
 - Bus capture: `saved_rs485_packets.md`
 - Bus capture: `saved_rs485_packets2.md`
+- Component TX/debug capture: `saved_rs485_packets3.md`
 
 Confidence legend:
 - **Confirmed**: directly observed in manual or packet data
@@ -53,6 +54,11 @@ Two frame families repeat in request/response pairs:
 2) Status response family:
 - `AA NODE 00 SEQ 81 01 MASK CHK 55`
 
+Current packet captures show response `ARG0=0x01`. Implementations may still
+learn and lock `ARG0` per session after validating `SRC=0x00` and `CMD=0x81`,
+but additional captures are needed before documenting any other `ARG0` values as
+confirmed protocol variants.
+
 High-confidence interpretation:
 - `DST/SRC` are swapped between request and response.
 - `SEQ` is copied from request to response.
@@ -62,11 +68,38 @@ High-confidence interpretation:
   - Capture set 2 (same physical system, different session) used `NODE=0x48`
   - Practical implication: implementations should learn this address at runtime from responses.
 
+### Component-generated poll trace (confirmed)
+
+`saved_rs485_packets3.md` contains ESPHome component debug lines rather than raw
+UART pairs. It shows repeated transmitted idle poll requests:
+
+- `node=0x48`
+- `seq=0x50..0x5D`
+- `arg1=0x00`
+- `chk=0xA4,0x2B,0xA3,0x2C,0xAA,0x25,0xAD,0x22,0xB8,0x37,0xBF,0x30,0xB6,0x39`
+
+These frames exactly match the established request family that would appear on
+the wire as:
+
+`AA 00 48 SEQ 01 00 00 CHK 55`
+
+The capture also shows `ZoneSwitch RX OK` increasing while `ZoneSwitch Node
+Address` remains `0`. This was captured before the later auto-detection PR was
+submitted. With that PR, the runtime node address should now be updated from
+valid discovered traffic instead of remaining at `0` in this scenario.
+
+Practical implication: `RX OK` should still be interpreted as “valid frame
+checksum”, not “valid status response received”. However, after the
+auto-detection change, a learned non-zero node address and/or an online status
+flag should be expected once valid controller traffic is present.
+
 ## Timing and sequencing (confirmed)
 
 - Observed cadence is approximately every 5 seconds at idle.
 - Each poll request is followed by one immediate response with same sequence.
 - Sequence observed from `0x66` to `0xC1` with one capture gap (`0x8E`..`0x96` not present), likely logging gap.
+- Component-generated polls in `saved_rs485_packets3.md` also advance `SEQ` by 1
+  per 5-second poll (`0x50..0x5D`).
 
 ## Zone state encoding (confirmed)
 
@@ -108,7 +141,8 @@ not a full desired mask write.
 - Byte `[7]` is a checksum/integrity byte.
 - Algorithm is **CRC-8/MAXIM** (`poly=0x31`, `init=0x00`, `refin=true`, `refout=true`, `xorout=0x00`).
 - Canonical input range is bytes `[1..6]` (`DST,SRC,SEQ,CMD,ARG0,ARG1/MASK`), i.e. excludes SOF/EOF/checksum bytes.
-- This model matched all frames from both captures (`saved_rs485_packets.md` and `saved_rs485_packets2.md`) with 100% accuracy.
+- This model matched all raw frames from both captures (`saved_rs485_packets.md` and `saved_rs485_packets2.md`) with 100% accuracy.
+- It also matches all 14 component-generated poll checksums in `saved_rs485_packets3.md` for `AA 00 48 SEQ 01 00 00 CHK 55`.
 
 ## Practical protocol model for implementation
 
@@ -128,6 +162,13 @@ To command zone on/off from ESPHome, these items are now known:
 - Outbound payload uses `ARG1` as toggle-bit (zone button semantics).
 - Outbound checksum uses CRC-8/MAXIM over bytes `[1..6]`.
 
+`saved_rs485_packets3.md` confirms the component can generate protocol-valid
+idle poll frames for `NODE=0x48`. Because this capture predates the
+auto-detection PR, the logged `ZoneSwitch Node Address` value staying at `0`
+should not be treated as current expected behavior. Retest with the
+auto-detection change and expect the learned node to update when valid
+controller traffic is present.
+
 ## Touchpad2 emulation approach (high-confidence design)
 
 Goal: plug ESPHome hardware into **T2** and emulate a second touchpad.
@@ -136,9 +177,10 @@ Recommended staged approach:
 
 1. **Passive parallel sniff** on T2 traffic first.
 2. Confirm idle poll/status identical whether 1 or 2 physical touchpads are connected.
-3. Capture traffic while pressing each zone on real touchpad (single press, long press, combos).
-4. Derive write command(s) and checksum.
-5. Enable ESPHome TX with collision-avoidance timing.
+3. Confirm auto-detection learns the node address from controller traffic.
+4. Capture traffic while pressing each zone on real touchpad (single press, long press, combos).
+5. Derive write command(s) and checksum.
+6. Enable ESPHome TX with collision-avoidance timing.
 
 Electrical guidance:
 - Use RS485 transceiver with receiver always enabled.
