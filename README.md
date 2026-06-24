@@ -2,6 +2,145 @@
 
 Research and tooling for decoding the Polyaire ZoneSwitch V2 touchpad/main-module protocol and building an ESPHome integration.
 
+## Hardware & ESPHome setup
+- Module used: ESP32-S3-RS485-CAN https://www.aliexpress.com/item/1005010428752299.html
+> **_NOTE:_** In theory any ESP32 and RS485 modules can be used as long as you make relevent changes to the yaml.
+
+### Wiring diagram:
+![alt text](docs/assets/schematic.jpg "Wiring diagram")
+
+### Connector Labels:
+![alt text](docs/assets/labels.jpg "Connector Labels")
+
+### Back side of the panel, ready to wire the module
+![alt text](docs/assets/back.png "Back side of the panel")
+
+### Drill to the mounting bracket to slide in the module
+![alt text](docs/assets/drilling.png "Drilling to fit the module")
+
+### Final look
+![alt text](docs/assets/ready.png "Final look")
+
+### ESPHome quick start:
+```yaml
+esphome:
+  name: ws-esp32s3-02
+  friendly_name: ws esp32s3 02
+  platformio_options:
+    board_build.flash_mode: dio
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: arduino
+  flash_size: 16MB
+
+# Disable logging
+logger:
+  baud_rate: 0   # IMPORTANT (UART conflict prevention)
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/jourdant/esphome-zoneswitch
+      ref: main
+    components: [ "zoneswitch" ]
+    refresh: 0s
+
+uart:
+  - id: zoneswitch_uart
+    tx_pin: GPIO17
+    rx_pin: GPIO18
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    flow_control_pin: GPIO21
+
+zoneswitch:
+  - id: zs_bus
+    uart_id: zoneswitch_uart
+    debug: false
+    enable_polling: true
+    poll_interval: 1s
+    offline_miss_threshold: 5
+    # Set to 1..6 if the controller has a known hardware spill zone.
+    spill_zone: 0
+
+switch:
+  - platform: zoneswitch
+    id: zone_1_switch
+    zoneswitch_id: zs_bus
+    zone: 1
+    name: "ZoneSwitch Zone 1"
+    icon: mdi:air-filter
+
+  - platform: zoneswitch
+    id: zone_2_switch
+    zoneswitch_id: zs_bus
+    zone: 2
+    name: "ZoneSwitch Zone 2"
+    icon: mdi:air-filter
+
+  - platform: zoneswitch
+    id: zone_3_switch
+    zoneswitch_id: zs_bus
+    zone: 3
+    name: "ZoneSwitch Zone 3"
+    icon: mdi:air-filter
+
+  - platform: zoneswitch
+    id: zone_4_switch
+    zoneswitch_id: zs_bus
+    zone: 4
+    name: "ZoneSwitch Zone 4"
+    icon: mdi:air-filter
+
+  - platform: zoneswitch
+    id: zone_5_switch
+    zoneswitch_id: zs_bus
+    zone: 5
+    name: "ZoneSwitch Zone 5"
+    icon: mdi:air-filter
+
+  - platform: zoneswitch
+    id: zone_6_switch
+    zoneswitch_id: zs_bus
+    zone: 6
+    name: "ZoneSwitch Zone 6"
+    icon: mdi:air-filter
+
+sensor:
+  - platform: zoneswitch
+    id: zoneswitch_node_address
+    zoneswitch_id: zs_bus
+    metric: node_address
+    name: "ZoneSwitch Node Address"
+    icon: mdi:identifier
+
+  - platform: zoneswitch
+    id: zoneswitch_rx_ok
+    zoneswitch_id: zs_bus
+    metric: rx_ok
+    name: "ZoneSwitch RX OK"
+    icon: mdi:counter
+
+  - platform: zoneswitch
+    id: zoneswitch_rx_bad
+    zoneswitch_id: zs_bus
+    metric: rx_bad
+    name: "ZoneSwitch RX Bad"
+    icon: mdi:counter
+
+binary_sensor:
+  - platform: zoneswitch
+    id: zoneswitch_online_status
+    zoneswitch_id: zs_bus
+    metric: online
+    name: "ZoneSwitch Gateway Online"
+    icon: mdi:lan-connect
+```
+
 ## Project goals
 
 - Decode RS485 packet format between ZoneSwitch touchpad and main control module
