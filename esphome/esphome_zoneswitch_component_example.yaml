@@ -24,6 +24,7 @@ zoneswitch:
     tx_idle_guard: 20ms
     node_confirmations: 3
     node_mismatch_threshold: 5
+    restore_node: false
     offline_miss_threshold: 5
     # Set to 1..6 if the controller has a known hardware spill zone.
     spill_zone: 0

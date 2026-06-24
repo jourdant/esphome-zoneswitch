@@ -3,6 +3,7 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
+#include "esphome/core/preferences.h"
 #include <vector>
 
 namespace esphome {
@@ -23,6 +24,7 @@ class ZoneSwitchDiagnosticListener {
 class ZoneSwitch : public uart::UARTDevice, public Component {
  public:
   float get_setup_priority() const override;
+  void setup() override;
   void dump_config() override;
   void loop() override;
 
@@ -41,6 +43,7 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   void set_tx_idle_guard(uint32_t guard_ms) { this->tx_idle_guard_ms_ = guard_ms; }
   void set_node_confirmations(uint8_t confirmations) { this->node_confirmations_required_ = confirmations; }
   void set_node_mismatch_threshold(uint8_t threshold) { this->node_mismatch_threshold_ = threshold; }
+  void set_restore_node(bool restore_node) { this->restore_node_ = restore_node; }
 
   uint8_t get_last_mask() const { return this->last_mask_; }
   uint8_t get_node_addr() const { return this->node_addr_; }
@@ -55,6 +58,13 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   bool send_request_(uint8_t arg1);
   uint8_t get_tx_node_() const;
   uint8_t apply_spill_guard_(uint8_t diff) const;
+  void save_locked_node_();
+
+  struct NodePreference {
+    uint8_t magic;
+    uint8_t node;
+    uint8_t arg0;
+  };
 
   GPIOPin *flow_control_pin_{nullptr};
   bool debug_{false};
@@ -80,9 +90,13 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint8_t node_confirmations_required_{3};
   uint8_t node_mismatch_count_{0};
   uint8_t node_mismatch_threshold_{5};
+  uint8_t restored_node_addr_{0x00};
+  uint8_t restored_arg0_{0x00};
  
   bool has_status_{false};
   bool node_locked_{false};
+  bool restore_node_{false};
+  bool restored_node_valid_{false};
   bool pending_desired_{false};
   bool enable_polling_{true};
   bool online_{false};
@@ -102,6 +116,8 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
 
   uint32_t rx_ok_count_{0};
   uint32_t rx_bad_count_{0};
+
+  ESPPreferenceObject node_pref_{};
 
   std::vector<ZoneSwitchMaskListener *> zones_;
   std::vector<ZoneSwitchMaskListener *> switches_;

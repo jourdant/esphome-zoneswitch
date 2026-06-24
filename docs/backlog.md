@@ -26,26 +26,24 @@ Next steps:
 
 ## Node autodetection and startup latency
 
-### Explore persisted node fallback with periodic reaffirmation
+### Validate persisted node fallback and invalidation
 
-The component currently learns the session node from live traffic and locks it
-after multiple matching status frames. This is conservative, but startup can be
-slower if the bus is quiet or if active polling is disabled until discovery.
+The component can persist the last confirmed node and restore it on boot as an
+untrusted fallback candidate. Fresh confirmations are still required before zone
+writes are enabled. The remaining work is to validate the behavior on hardware
+and decide whether any additional invalidation policy is needed.
 
 Possible strategy:
 
-- Persist the last confirmed node address across reboots.
-- On boot, restore it only as an untrusted fallback candidate, not as a locked
-  node.
-- Require fresh status confirmations before enabling zone writes.
-- Periodically reaffirm the selected node while running, e.g. every 100th valid
-  status frame or on a time interval.
+- Confirm restored candidates speed up active polling in real deployments.
+- Confirm stale restored candidates are cleared by `node_mismatch_threshold` or
+  normal missed-response handling.
+- Confirm writes remain blocked until fresh status confirmations lock the node.
 - Build on the runtime `node_mismatch_threshold` guard: count valid-looking status
   frames that do not match the locked node/`ARG0` pair, and restart autodetection
   if the count crosses the threshold.
-- Invalidate the restored candidate if responses are missed, if a different node
-  reaches the confirmation threshold, if mismatch threshold is reached, or if
-  sequence/response patterns suggest traffic belongs to another session.
+- Consider whether time-based invalidation is useful in addition to mismatch and
+  missed-response handling.
 
 This should have minimal ESPHome loop impact because reaffirmation can be a cheap
 counter check on frames already being parsed. The main design question is safety:

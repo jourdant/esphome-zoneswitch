@@ -77,6 +77,10 @@ zoneswitch:
     # Optional: consecutive locked-node mismatches before dropping the learned
     # address and restarting autodetection.
     node_mismatch_threshold: 5
+    # Optional: persist the last confirmed node and restore it on boot as an
+    # untrusted fallback candidate. Fresh confirmations are still required
+    # before zone writes are enabled.
+    restore_node: false
     # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
     # Optional: set to 1..6 if the controller has a known hardware spill zone.
@@ -253,6 +257,10 @@ zoneswitch:
     # Optional: consecutive locked-node mismatches before dropping the learned
     # address and restarting autodetection.
     node_mismatch_threshold: 5
+    # Optional: persist the last confirmed node and restore it on boot as an
+    # untrusted fallback candidate. Fresh confirmations are still required
+    # before zone writes are enabled.
+    restore_node: false
     # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
     # Optional: set to 1..6 if your controller has a known spill zone.
@@ -316,10 +324,10 @@ For faster startup, there are three possible strategies:
   a stable session node. This is fastest, but least conservative.
 - Use `tx_node_addr: 0` and rely on passive autodetection. This is safest, but it
   waits for existing bus traffic before active polling can start.
-- Persist the last autodetected node and restore it on boot. This may save one
-  discovery cycle, but it needs explicit invalidation because the packet captures
-  show node addresses can change between sessions. This should be treated as a
-  future optimization rather than the default safety behavior.
+- Enable `restore_node` to persist the last autodetected node and restore it on
+  boot as an untrusted fallback candidate. This may save one discovery cycle, but
+  it still requires fresh confirmations before writes because the packet captures
+  show node addresses can change between sessions.
 
 A low-impact version of the persistence idea would be to restore the last node as
 an untrusted fallback candidate, continue passively validating every status frame,
@@ -330,9 +338,9 @@ frames the parser is already processing. It still needs careful invalidation:
 missed responses, sequence mismatch patterns, or a different confirmed node
 should clear the restored candidate and fall back to normal autodetection.
 
-The current `node_mismatch_threshold` guard is a first step toward that strategy:
-it does not persist across reboots yet, but it gives us the runtime invalidation
-mechanism needed before persistence would be safe.
+`restore_node` and `node_mismatch_threshold` now provide the basic persistence
+and runtime invalidation path. The restored value is never treated as locked
+until live traffic confirms it again.
 
 See `docs/backlog.md` for the persistence and protocol-variant cleanup tasks.
 

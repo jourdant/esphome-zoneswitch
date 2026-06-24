@@ -23,6 +23,7 @@ CONF_SPILL_ZONE = "spill_zone"
 CONF_TX_IDLE_GUARD = "tx_idle_guard"
 CONF_NODE_CONFIRMATIONS = "node_confirmations"
 CONF_NODE_MISMATCH_THRESHOLD = "node_mismatch_threshold"
+CONF_RESTORE_NODE = "restore_node"
 
 
 def _validate_poll_interval(value):
@@ -48,6 +49,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_TX_IDLE_GUARD, default="20ms"): cv.positive_time_period_milliseconds,
             cv.Optional(CONF_NODE_CONFIRMATIONS, default=3): cv.int_range(min=1, max=10),
             cv.Optional(CONF_NODE_MISMATCH_THRESHOLD, default=5): cv.int_range(min=1, max=255),
+            cv.Optional(CONF_RESTORE_NODE, default=False): cv.boolean,
         }
     ).extend(cv.COMPONENT_SCHEMA)
 )
@@ -73,3 +75,4 @@ async def to_code(config):
     cg.add(var.set_tx_idle_guard(config[CONF_TX_IDLE_GUARD]))
     cg.add(var.set_node_confirmations(config[CONF_NODE_CONFIRMATIONS]))
     cg.add(var.set_node_mismatch_threshold(config[CONF_NODE_MISMATCH_THRESHOLD]))
+    cg.add(var.set_restore_node(config[CONF_RESTORE_NODE]))

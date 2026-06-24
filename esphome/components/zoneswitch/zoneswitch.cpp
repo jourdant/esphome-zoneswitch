@@ -7,8 +7,37 @@ namespace esphome {
 namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch";
+static constexpr uint32_t NODE_PREF_KEY = 0x5A510001UL;
+static constexpr uint8_t NODE_PREF_MAGIC = 0xA5;
 
 float ZoneSwitch::get_setup_priority() const { return setup_priority::DATA; }
+
+void ZoneSwitch::setup() {
+  if (!this->restore_node_) {
+    return;
+  }
+
+  this->node_pref_ = global_preferences->make_preference<NodePreference>(NODE_PREF_KEY, true);
+  NodePreference restored{};
+  if (!this->node_pref_.load(&restored) || restored.magic != NODE_PREF_MAGIC || restored.node == 0x00) {
+    if (this->debug_) {
+      ESP_LOGD(TAG, "No restored node candidate available");
+    }
+    return;
+  }
+
+  this->restored_node_addr_ = restored.node;
+  this->restored_arg0_ = restored.arg0;
+  this->restored_node_valid_ = true;
+  this->candidate_node_addr_ = restored.node;
+  this->candidate_arg0_ = restored.arg0;
+  this->candidate_confirmations_ = 0;
+  this->node_addr_ = restored.node;
+
+  if (this->debug_) {
+    ESP_LOGD(TAG, "Restored node candidate: node=0x%02X arg0=0x%02X", restored.node, restored.arg0);
+  }
+}
 
 void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "ZoneSwitch:");
@@ -18,6 +47,10 @@ void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "  Poll interval: %ums", this->poll_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Polling enabled: %s", YESNO(this->enable_polling_));
   ESP_LOGCONFIG(TAG, "  TX fallback node: 0x%02X", this->tx_node_addr_);
+  ESP_LOGCONFIG(TAG, "  Restore learned node: %s", YESNO(this->restore_node_));
+  if (this->restored_node_valid_) {
+    ESP_LOGCONFIG(TAG, "  Restored node candidate: 0x%02X", this->restored_node_addr_);
+  }
   ESP_LOGCONFIG(TAG, "  TX idle guard: %ums", this->tx_idle_guard_ms_);
   ESP_LOGCONFIG(TAG, "  Node confirmations required: %u", this->node_confirmations_required_);
   ESP_LOGCONFIG(TAG, "  Node mismatch threshold: %u", this->node_mismatch_threshold_);
@@ -114,7 +147,37 @@ void ZoneSwitch::publish_diagnostics_() {
 }
 
 uint8_t ZoneSwitch::get_tx_node_() const {
-  return this->node_locked_ && this->node_addr_ != 0 ? this->node_addr_ : this->tx_node_addr_;
+  if (this->node_locked_ && this->node_addr_ != 0) {
+    return this->node_addr_;
+  }
+  if (this->restored_node_valid_ && this->restored_node_addr_ != 0) {
+    return this->restored_node_addr_;
+  }
+  return this->tx_node_addr_;
+}
+
+void ZoneSwitch::save_locked_node_() {
+  if (!this->restore_node_ || !this->node_locked_ || this->node_addr_ == 0x00 || this->learned_arg0_ == 0x00) {
+    return;
+  }
+
+  if (this->restored_node_valid_ && this->restored_node_addr_ == this->node_addr_ &&
+      this->restored_arg0_ == this->learned_arg0_) {
+    return;
+  }
+
+  NodePreference stored{NODE_PREF_MAGIC, this->node_addr_, this->learned_arg0_};
+  if (this->node_pref_.save(&stored)) {
+    global_preferences->sync();
+    this->restored_node_addr_ = stored.node;
+    this->restored_arg0_ = stored.arg0;
+    this->restored_node_valid_ = true;
+    if (this->debug_) {
+      ESP_LOGD(TAG, "Saved node candidate: node=0x%02X arg0=0x%02X", stored.node, stored.arg0);
+    }
+  } else {
+    ESP_LOGW(TAG, "Failed to save node candidate");
+  }
 }
 
 bool ZoneSwitch::send_request_(uint8_t arg1) {
@@ -327,6 +390,7 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
       if (this->debug_) {
         ESP_LOGD(TAG, "Locked node address: node=0x%02X frame[5]=0x%02X", this->node_addr_, this->learned_arg0_);
       }
+      this->save_locked_node_();
     }
 
     if (frame[1] != this->node_addr_ || arg0 != this->learned_arg0_) {
@@ -349,6 +413,7 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
         this->candidate_confirmations_ = 1;
         this->node_addr_ = this->candidate_node_addr_;
         this->node_mismatch_count_ = 0;
+        this->restored_node_valid_ = false;
         this->has_status_ = false;
         this->online_ = false;
         this->waiting_for_response_ = false;
