@@ -20,6 +20,7 @@ void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "  TX fallback node: 0x%02X", this->tx_node_addr_);
   ESP_LOGCONFIG(TAG, "  TX idle guard: %ums", this->tx_idle_guard_ms_);
   ESP_LOGCONFIG(TAG, "  Node confirmations required: %u", this->node_confirmations_required_);
+  ESP_LOGCONFIG(TAG, "  Node mismatch threshold: %u", this->node_mismatch_threshold_);
   ESP_LOGCONFIG(TAG, "  Offline miss threshold: %u", this->offline_miss_threshold_);
   ESP_LOGCONFIG(TAG, "  Spill zone guard: %u", this->spill_zone_);
   ESP_LOGCONFIG(TAG, "  Last node address: 0x%02X", this->node_addr_);
@@ -328,12 +329,39 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
       }
     }
 
-    // Only process frames that match the learned variant.
-    if (arg0 != this->learned_arg0_) {
-      // Different ARG0 — not a status frame for this session; ignore silently.
+    if (frame[1] != this->node_addr_ || arg0 != this->learned_arg0_) {
+      if (this->node_mismatch_count_ < 0xFF) {
+        this->node_mismatch_count_++;
+      }
+
+      if (this->debug_) {
+        ESP_LOGW(TAG, "Status node mismatch: got node=0x%02X arg0=0x%02X expected node=0x%02X arg0=0x%02X count=%u/%u",
+                 frame[1], arg0, this->node_addr_, this->learned_arg0_, this->node_mismatch_count_,
+                 this->node_mismatch_threshold_);
+      }
+
+      if (this->node_mismatch_count_ >= this->node_mismatch_threshold_) {
+        ESP_LOGW(TAG, "Node mismatch threshold reached; unlocking node and restarting autodetection");
+        this->node_locked_ = false;
+        this->learned_arg0_ = 0x00;
+        this->candidate_node_addr_ = frame[1];
+        this->candidate_arg0_ = arg0;
+        this->candidate_confirmations_ = 1;
+        this->node_addr_ = this->candidate_node_addr_;
+        this->node_mismatch_count_ = 0;
+        this->has_status_ = false;
+        this->online_ = false;
+        this->waiting_for_response_ = false;
+        this->waiting_for_write_response_ = false;
+        this->pending_desired_ = false;
+        this->require_fresh_status_before_write_ = true;
+      }
+
       this->publish_diagnostics_();
       return true;
     }
+
+    this->node_mismatch_count_ = 0;
 
     // Valid status response — process it.
     const uint8_t previous_mask = this->last_mask_;

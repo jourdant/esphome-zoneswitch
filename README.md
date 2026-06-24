@@ -59,14 +59,28 @@ uart:
 
 zoneswitch:
   - id: zs_bus
+    # Required: UART bus connected to the ZoneSwitch RS485 lines.
     uart_id: zoneswitch_uart
+    # Optional: emit verbose protocol logs. Keep false for normal operation.
     debug: false
+    # Optional: send periodic protocol polls in addition to passive decoding.
     enable_polling: true
+    # Optional: interval between active polls/writes. Lower values react faster
+    # but add more traffic to the bus.
     poll_interval: 1s
+    # Optional: require the bus RX side to be quiet for this long before TX.
+    # Helps reduce collisions on a shared half-duplex RS485 bus.
     tx_idle_guard: 20ms
+    # Optional: number of matching status frames required before locking the
+    # autodetected node address and enabling control writes.
     node_confirmations: 3
+    # Optional: consecutive locked-node mismatches before dropping the learned
+    # address and restarting autodetection.
+    node_mismatch_threshold: 5
+    # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
-    # Set to 1..6 if the controller has a known hardware spill zone.
+    # Optional: set to 1..6 if the controller has a known hardware spill zone.
+    # Set to 0 to disable spill-zone guarding.
     spill_zone: 0
 
 switch:
@@ -174,6 +188,7 @@ binary_sensor:
 - Reverse-engineering outputs:
   - `docs/specs/polyaire_zoneswitch_protocol_spec_draft.md`
   - `docs/specs/esphome_zoneswitch_touchpad2_plan.md`
+  - `docs/backlog.md`
   - `docs/research/rs485_esphome_best_practices.md`
 - ESPHome starter templates:
   - `esphome/esphome_zoneswitch_example_readonly.yaml`
@@ -224,12 +239,24 @@ uart:
 
 zoneswitch:
   - id: zs_bus
+    # Required: UART bus connected to the ZoneSwitch RS485 lines.
     uart_id: zoneswitch_uart
+    # Optional: interval between active polls/writes. Lower values react faster
+    # but add more traffic to the bus.
     poll_interval: 5s
+    # Optional: require the bus RX side to be quiet for this long before TX.
+    # Helps reduce collisions on a shared half-duplex RS485 bus.
     tx_idle_guard: 20ms
+    # Optional: number of matching status frames required before locking the
+    # autodetected node address and enabling control writes.
     node_confirmations: 3
+    # Optional: consecutive locked-node mismatches before dropping the learned
+    # address and restarting autodetection.
+    node_mismatch_threshold: 5
+    # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
     # Optional: set to 1..6 if your controller has a known spill zone.
+    # Set to 0 to disable spill-zone guarding.
     spill_zone: 0
 
 switch:
@@ -251,6 +278,8 @@ switch:
 For a complete example with all 6 zones, see
 `esphome/esphome_zoneswitch_component_example.yaml`.
 
+Open follow-up work is tracked in `docs/backlog.md`.
+
 The component validates CRC-8/MAXIM on received frames, learns the session-scoped
 node address from valid status responses, exposes optional RX diagnostic counters
 (`metric: rx_ok` and `metric: rx_bad`), and suppresses repeated toggle writes
@@ -261,6 +290,13 @@ for diagnostics, but the component does not treat it as locked until it has seen
 `node_confirmations` matching status frames. Zone switch commands are ignored
 until a valid locked status frame initializes the live mask, so a Home Assistant
 command cannot be based on a stale or assumed all-off mask.
+
+After a node is locked, the component counts consecutive status frames that look
+valid but no longer match the locked node/`ARG0` pair. If that count reaches
+`node_mismatch_threshold`, it marks the node stale, drops online state, clears any
+pending write intent, and restarts autodetection. This lets the component recover
+from a controller/session change without letting one stray frame immediately
+reset the learned node.
 
 Before transmitting, the component requires the UART RX side to have been idle
 for `tx_idle_guard` and then holds RS485 driver-enable asserted for a conservative
@@ -284,6 +320,21 @@ For faster startup, there are three possible strategies:
   discovery cycle, but it needs explicit invalidation because the packet captures
   show node addresses can change between sessions. This should be treated as a
   future optimization rather than the default safety behavior.
+
+A low-impact version of the persistence idea would be to restore the last node as
+an untrusted fallback candidate, continue passively validating every status frame,
+and only keep using it while periodic confirmations still match. For example, the
+component could reaffirm every 100th status frame or use a time-based interval.
+That should be cheap in the ESPHome loop because it is just a counter check on
+frames the parser is already processing. It still needs careful invalidation:
+missed responses, sequence mismatch patterns, or a different confirmed node
+should clear the restored candidate and fall back to normal autodetection.
+
+The current `node_mismatch_threshold` guard is a first step toward that strategy:
+it does not persist across reboots yet, but it gives us the runtime invalidation
+mechanism needed before persistence would be safe.
+
+See `docs/backlog.md` for the persistence and protocol-variant cleanup tasks.
 
 ## Next recommended capture set
 

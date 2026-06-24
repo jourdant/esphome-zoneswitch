@@ -40,6 +40,7 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   void set_spill_zone(uint8_t spill_zone) { this->spill_zone_ = spill_zone; }
   void set_tx_idle_guard(uint32_t guard_ms) { this->tx_idle_guard_ms_ = guard_ms; }
   void set_node_confirmations(uint8_t confirmations) { this->node_confirmations_required_ = confirmations; }
+  void set_node_mismatch_threshold(uint8_t threshold) { this->node_mismatch_threshold_ = threshold; }
 
   uint8_t get_last_mask() const { return this->last_mask_; }
   uint8_t get_node_addr() const { return this->node_addr_; }
@@ -77,6 +78,8 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint8_t candidate_arg0_{0x00};
   uint8_t candidate_confirmations_{0};
   uint8_t node_confirmations_required_{3};
+  uint8_t node_mismatch_count_{0};
+  uint8_t node_mismatch_threshold_{5};
  
   bool has_status_{false};
   bool node_locked_{false};
