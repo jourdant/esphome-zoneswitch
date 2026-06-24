@@ -55,6 +55,8 @@ uart:
     data_bits: 8
     parity: NONE
     stop_bits: 1
+    # ESP32 UART-level RS485 driver-enable control. Preferred when your
+    # transceiver DE/RE pin is connected to the ESP.
     flow_control_pin: GPIO21
 
 zoneswitch:
@@ -77,10 +79,16 @@ zoneswitch:
     # Optional: consecutive locked-node mismatches before dropping the learned
     # address and restarting autodetection.
     node_mismatch_threshold: 5
+    # Optional: fallback node to use before autodetection locks a node. Set to 0
+    # for passive-only learning unless restore_node provides a candidate.
+    tx_node_addr: 0x48
     # Optional: persist the last confirmed node and restore it on boot as an
     # untrusted fallback candidate. Fresh confirmations are still required
     # before zone writes are enabled.
     restore_node: false
+    # Optional: component-managed DE/RE control pin. Usually leave unset if you
+    # use uart.flow_control_pin above.
+    # flow_control_pin: GPIO21
     # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
     # Optional: set to 1..6 if the controller has a known hardware spill zone.
@@ -177,7 +185,7 @@ binary_sensor:
 - Touchpad2 emulation plan created (staged passive -> active approach).
 - External ESPHome component scaffolded (`zoneswitch`) with assignable zone entities.
 - External ESPHome component now supports both per-zone status and per-zone switch control.
-- Read-only ESPHome example created for zone mask decoding.
+- Commented ESPHome component example created for zone mask decoding and control.
 - RS485/ESPHome best-practices research consolidated and applied.
 - Azure Document Intelligence script added for reusable PDF/image OCR to Markdown.
 
@@ -195,8 +203,6 @@ binary_sensor:
   - `docs/backlog.md`
   - `docs/research/rs485_esphome_best_practices.md`
 - ESPHome starter templates:
-  - `esphome/esphome_zoneswitch_example_readonly.yaml`
-  - `esphome/esphome_zoneswitch_example_readwrite.yaml`
   - `esphome/esphome_zoneswitch_component_example.yaml`
 - External component source:
   - `esphome/components/zoneswitch/`
@@ -220,8 +226,8 @@ From current captures:
 
 See the draft spec for exact byte-level detail and confidence labels.
 
-The `esphome/esphome_zoneswitch_example_readwrite.yaml` file includes passive
-decode and write controls with protocol-valid framing and checksum (CRC-8/MAXIM).
+The `esphome/esphome_zoneswitch_component_example.yaml` file includes a larger
+commented configuration with all zones and diagnostics.
 
 ## ESPHome external component usage
 
@@ -240,6 +246,8 @@ uart:
     rx_pin: GPIO03
     tx_pin: GPIO04
     baud_rate: 9600
+    # Optional but recommended for ESP32 RS485 hardware when DE/RE is wired.
+    flow_control_pin: GPIO05
 
 zoneswitch:
   - id: zs_bus
@@ -257,10 +265,16 @@ zoneswitch:
     # Optional: consecutive locked-node mismatches before dropping the learned
     # address and restarting autodetection.
     node_mismatch_threshold: 5
+    # Optional: fallback node to use before autodetection locks a node. Set to 0
+    # for passive-only learning unless restore_node provides a candidate.
+    tx_node_addr: 0x48
     # Optional: persist the last confirmed node and restore it on boot as an
     # untrusted fallback candidate. Fresh confirmations are still required
     # before zone writes are enabled.
     restore_node: false
+    # Optional: component-managed DE/RE control pin. Usually leave unset if you
+    # use uart.flow_control_pin above.
+    # flow_control_pin: GPIO05
     # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
     # Optional: set to 1..6 if your controller has a known spill zone.

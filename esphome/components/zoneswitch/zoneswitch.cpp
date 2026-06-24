@@ -68,7 +68,7 @@ void ZoneSwitch::dump_config() {
   if (this->flow_control_pin_ != nullptr) {
     ESP_LOGCONFIG(TAG, "  Flow control pin set");
   } else if (this->enable_polling_ || !this->switches_.empty()) {
-    ESP_LOGW(TAG, "  No flow_control_pin configured; active RS-485 TX may not be safe on half-duplex hardware");
+    ESP_LOGCONFIG(TAG, "  Component flow control pin not set; relying on UART/transceiver configuration");
   }
 }
 
