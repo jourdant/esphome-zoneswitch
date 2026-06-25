@@ -10,10 +10,17 @@ CODEOWNERS = ["@jourdant"]
 
 CONF_ZONESWITCH_ID = "zoneswitch_id"
 CONF_METRIC = "metric"
+CONF_FORMAT = "format"
 
 TextSensorMetric = zoneswitch_ns.enum("TextSensorMetric")
 TEXT_SENSOR_METRICS = {
     "node_address": TextSensorMetric.TEXT_SENSOR_METRIC_NODE_ADDRESS,
+}
+
+TextSensorFormat = zoneswitch_ns.enum("TextSensorFormat")
+TEXT_SENSOR_FORMATS = {
+    "hex": TextSensorFormat.TEXT_SENSOR_FORMAT_HEX,
+    "decimal": TextSensorFormat.TEXT_SENSOR_FORMAT_DECIMAL,
 }
 
 ZoneSwitchTextSensor = zoneswitch_ns.class_(
@@ -27,6 +34,7 @@ CONFIG_SCHEMA = (
             cv.GenerateID(): cv.declare_id(ZoneSwitchTextSensor),
             cv.GenerateID(CONF_ZONESWITCH_ID): cv.use_id(ZoneSwitch),
             cv.Required(CONF_METRIC): cv.enum(TEXT_SENSOR_METRICS, lower=True),
+            cv.Optional(CONF_FORMAT, default="hex"): cv.enum(TEXT_SENSOR_FORMATS, lower=True),
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -41,4 +49,5 @@ async def to_code(config):
     parent = await cg.get_variable(config[CONF_ZONESWITCH_ID])
     cg.add(var.set_parent(parent))
     cg.add(var.set_metric(config[CONF_METRIC]))
+    cg.add(var.set_format(config[CONF_FORMAT]))
     cg.add(parent.register_diagnostic(var))

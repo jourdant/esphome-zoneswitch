@@ -167,6 +167,25 @@ binary_sensor:
     metric: online
     name: "ZoneSwitch Gateway Online"
     icon: mdi:lan-connect
+
+text_sensor:
+  # Hex format (default): publishes "0x48"
+  - platform: zoneswitch
+    id: zoneswitch_node_address_text
+    zoneswitch_id: zs_bus
+    metric: node_address
+    name: "ZoneSwitch Node Address"
+    icon: mdi:identifier
+    # format: hex  # default
+
+  # Decimal format: publishes "72"
+  - platform: zoneswitch
+    id: zoneswitch_node_address_decimal
+    zoneswitch_id: zs_bus
+    metric: node_address
+    format: decimal
+    name: "ZoneSwitch Node Address (decimal)"
+    icon: mdi:identifier
 ```
 
 ## Project goals
@@ -295,6 +314,25 @@ switch:
     zone: 2
     name: "Zone 2"
     icon: mdi:air-filter
+
+text_sensor:
+  # Hex format (default): publishes "0x48"
+  - platform: zoneswitch
+    id: zoneswitch_node_address_text
+    zoneswitch_id: zs_bus
+    metric: node_address
+    name: "ZoneSwitch Node Address"
+    icon: mdi:identifier
+    # format: hex  # default
+
+  # Decimal format: publishes "72"
+  - platform: zoneswitch
+    id: zoneswitch_node_address_decimal
+    zoneswitch_id: zs_bus
+    metric: node_address
+    format: decimal
+    name: "ZoneSwitch Node Address (decimal)"
+    icon: mdi:identifier
 ```
 
 For a complete example with all 6 zones, see
