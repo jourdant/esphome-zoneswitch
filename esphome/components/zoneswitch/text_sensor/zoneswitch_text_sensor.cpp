@@ -27,6 +27,8 @@ void ZoneSwitchTextSensor::publish_if_changed_(uint8_t node_addr, const char *st
 void ZoneSwitchTextSensor::on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count,
                                                   uint32_t rx_bad_count) {
   if (this->metric_ == TEXT_SENSOR_METRIC_NODE_ADDRESS) {
+    if (this->has_published_state_ && this->last_published_node_addr_ == node_addr)
+      return;
     char buf[7];
     if (this->format_ == TEXT_SENSOR_FORMAT_HEX) {
       snprintf(buf, sizeof(buf), "0x%02X", node_addr);

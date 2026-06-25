@@ -55,6 +55,7 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   void publish_mask_(uint8_t mask);
   void publish_diagnostics_();
   void run_poll_cycle_();
+  void service_flow_control_();
   bool send_request_(uint8_t arg1);
   uint8_t get_tx_node_() const;
   uint8_t apply_spill_guard_(uint8_t diff) const;
@@ -113,6 +114,9 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint32_t last_rx_byte_ms_{0};
   uint32_t tx_idle_guard_ms_{20};
   uint32_t tx_de_assert_delay_ms_{20};
+  uint32_t tx_de_assert_at_ms_{0};
+
+  bool tx_de_assert_pending_{false};
 
   uint32_t rx_ok_count_{0};
   uint32_t rx_bad_count_{0};
