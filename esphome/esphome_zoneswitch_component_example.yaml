@@ -14,16 +14,45 @@ uart:
     data_bits: 8
     parity: NONE
     stop_bits: 1
+    # Optional but recommended for ESP32 RS485 hardware when DE/RE is wired.
+    # This enables ESPHome UART-level half-duplex flow control.
+    flow_control_pin: GPIO05
 
 zoneswitch:
   - id: zs_bus
+    # Required: UART bus connected to the ZoneSwitch RS485 lines.
     uart_id: zoneswitch_uart
+    # Optional: emit verbose protocol logs. Keep false for normal operation.
     debug: false
+    # Optional: send periodic protocol polls in addition to passive decoding.
     enable_polling: true
+    # Optional: interval between active polls/writes. Lower values react faster
+    # but add more traffic to the bus.
     poll_interval: 5s
+    # Optional: require the bus RX side to be quiet for this long before TX.
+    # Helps reduce collisions on a shared half-duplex RS485 bus.
+    tx_idle_guard: 20ms
+    # Optional: number of matching status frames required before locking the
+    # autodetected node address and enabling control writes.
+    node_confirmations: 3
+    # Optional: consecutive locked-node mismatches before dropping the learned
+    # address and restarting autodetection.
+    node_mismatch_threshold: 5
+    # Optional: fallback node to use before autodetection locks a node. Set to 0
+    # for passive-only learning unless restore_node provides a candidate.
+    tx_node_addr: 0x48
+    # Optional: persist the last confirmed node and restore it on boot as an
+    # untrusted fallback candidate. Fresh confirmations are still required
+    # before zone writes are enabled.
+    restore_node: false
+    # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
-    # Set to 1..6 if the controller has a known hardware spill zone.
+    # Optional: set to 1..6 if the controller has a known hardware spill zone.
+    # Set to 0 to disable spill-zone guarding.
     spill_zone: 0
+    # Optional: component-managed DE/RE control pin. Usually leave unset if you
+    # use uart.flow_control_pin above.
+    # flow_control_pin: GPIO05
 
 switch:
   - platform: zoneswitch
@@ -97,3 +126,22 @@ binary_sensor:
     metric: online
     name: "ZoneSwitch Gateway Online"
     icon: mdi:lan-connect
+
+text_sensor:
+  # Hex format (default): publishes "0x48"
+  - platform: zoneswitch
+    id: zoneswitch_node_address_text
+    zoneswitch_id: zs_bus
+    metric: node_address
+    name: "ZoneSwitch Node Address"
+    icon: mdi:identifier
+    # format: hex  # default
+
+  # Decimal format: publishes "72"
+  - platform: zoneswitch
+    id: zoneswitch_node_address_decimal
+    zoneswitch_id: zs_bus
+    metric: node_address
+    format: decimal
+    name: "ZoneSwitch Node Address (decimal)"
+    icon: mdi:identifier

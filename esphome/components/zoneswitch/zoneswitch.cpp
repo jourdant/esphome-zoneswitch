@@ -7,8 +7,37 @@ namespace esphome {
 namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch";
+static constexpr uint32_t NODE_PREF_KEY = 0x5A510001UL;
+static constexpr uint8_t NODE_PREF_MAGIC = 0xA5;
 
 float ZoneSwitch::get_setup_priority() const { return setup_priority::DATA; }
+
+void ZoneSwitch::setup() {
+  if (!this->restore_node_) {
+    return;
+  }
+
+  this->node_pref_ = global_preferences->make_preference<NodePreference>(NODE_PREF_KEY, true);
+  NodePreference restored{};
+  if (!this->node_pref_.load(&restored) || restored.magic != NODE_PREF_MAGIC || restored.node == 0x00) {
+    if (this->debug_) {
+      ESP_LOGD(TAG, "No restored node candidate available");
+    }
+    return;
+  }
+
+  this->restored_node_addr_ = restored.node;
+  this->restored_arg0_ = restored.arg0;
+  this->restored_node_valid_ = true;
+  this->candidate_node_addr_ = restored.node;
+  this->candidate_arg0_ = restored.arg0;
+  this->candidate_confirmations_ = 0;
+  this->node_addr_ = restored.node;
+
+  if (this->debug_) {
+    ESP_LOGD(TAG, "Restored node candidate: node=0x%02X arg0=0x%02X", restored.node, restored.arg0);
+  }
+}
 
 void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "ZoneSwitch:");
@@ -18,6 +47,13 @@ void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "  Poll interval: %ums", this->poll_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Polling enabled: %s", YESNO(this->enable_polling_));
   ESP_LOGCONFIG(TAG, "  TX fallback node: 0x%02X", this->tx_node_addr_);
+  ESP_LOGCONFIG(TAG, "  Restore learned node: %s", YESNO(this->restore_node_));
+  if (this->restored_node_valid_) {
+    ESP_LOGCONFIG(TAG, "  Restored node candidate: 0x%02X", this->restored_node_addr_);
+  }
+  ESP_LOGCONFIG(TAG, "  TX idle guard: %ums", this->tx_idle_guard_ms_);
+  ESP_LOGCONFIG(TAG, "  Node confirmations required: %u", this->node_confirmations_required_);
+  ESP_LOGCONFIG(TAG, "  Node mismatch threshold: %u", this->node_mismatch_threshold_);
   ESP_LOGCONFIG(TAG, "  Offline miss threshold: %u", this->offline_miss_threshold_);
   ESP_LOGCONFIG(TAG, "  Spill zone guard: %u", this->spill_zone_);
   ESP_LOGCONFIG(TAG, "  Last node address: 0x%02X", this->node_addr_);
@@ -31,6 +67,8 @@ void ZoneSwitch::dump_config() {
   }
   if (this->flow_control_pin_ != nullptr) {
     ESP_LOGCONFIG(TAG, "  Flow control pin set");
+  } else if (this->enable_polling_ || !this->switches_.empty()) {
+    ESP_LOGCONFIG(TAG, "  Component flow control pin not set; relying on UART/transceiver configuration");
   }
 }
 
@@ -43,6 +81,17 @@ void ZoneSwitch::register_diagnostic(ZoneSwitchDiagnosticListener *diagnostic) {
 void ZoneSwitch::request_zone_state(uint8_t zone, bool target_on) {
   if (zone < 1 || zone > 6) {
     return;
+  }
+
+  if (!this->has_status_ || !this->online_) {
+    if (this->debug_) {
+      ESP_LOGW(TAG, "Ignoring zone request before first valid status frame");
+    }
+    return;
+  }
+
+  if (!this->pending_desired_) {
+    this->desired_mask_ = this->last_mask_;
   }
 
   const uint8_t bit = (uint8_t) (1 << (zone - 1));
@@ -98,7 +147,37 @@ void ZoneSwitch::publish_diagnostics_() {
 }
 
 uint8_t ZoneSwitch::get_tx_node_() const {
-  return this->node_addr_ != 0 ? this->node_addr_ : this->tx_node_addr_;
+  if (this->node_locked_ && this->node_addr_ != 0) {
+    return this->node_addr_;
+  }
+  if (this->restored_node_valid_ && this->restored_node_addr_ != 0) {
+    return this->restored_node_addr_;
+  }
+  return this->tx_node_addr_;
+}
+
+void ZoneSwitch::save_locked_node_() {
+  if (!this->restore_node_ || !this->node_locked_ || this->node_addr_ == 0x00 || this->learned_arg0_ == 0x00) {
+    return;
+  }
+
+  if (this->restored_node_valid_ && this->restored_node_addr_ == this->node_addr_ &&
+      this->restored_arg0_ == this->learned_arg0_) {
+    return;
+  }
+
+  NodePreference stored{NODE_PREF_MAGIC, this->node_addr_, this->learned_arg0_};
+  if (this->node_pref_.save(&stored)) {
+    global_preferences->sync();
+    this->restored_node_addr_ = stored.node;
+    this->restored_arg0_ = stored.arg0;
+    this->restored_node_valid_ = true;
+    if (this->debug_) {
+      ESP_LOGD(TAG, "Saved node candidate: node=0x%02X arg0=0x%02X", stored.node, stored.arg0);
+    }
+  } else {
+    ESP_LOGW(TAG, "Failed to save node candidate");
+  }
 }
 
 bool ZoneSwitch::send_request_(uint8_t arg1) {
@@ -113,6 +192,14 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
   if (this->available() > 0) {
     if (this->debug_) {
       ESP_LOGD(TAG, "Deferring TX because RX data is pending");
+    }
+    return false;
+  }
+
+  const uint32_t now = millis();
+  if (this->last_rx_byte_ms_ != 0 && (now - this->last_rx_byte_ms_) < this->tx_idle_guard_ms_) {
+    if (this->debug_) {
+      ESP_LOGD(TAG, "Deferring TX until bus has been idle for %ums", this->tx_idle_guard_ms_);
     }
     return false;
   }
@@ -142,8 +229,9 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
   this->flush();
 
   if (this->flow_control_pin_ != nullptr) {
-    // Keep RS-485 DE asserted long enough for the last 9600-baud byte to leave the transceiver.
-    delay(10);
+    // ESPHome UART flush waits for TX FIFO drain, but keep DE asserted for a
+    // conservative extra frame-time margin at the documented 9600-baud protocol rate.
+    delay(this->tx_de_assert_delay_ms_);
     this->flow_control_pin_->digital_write(false);
   }
 
@@ -259,29 +347,86 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
   //
   // frame[2] == 0x00 : SRC field is always 0x00 in controller responses
   // frame[4] == 0x81 : CMD byte for response/ack (confirmed across all captures)
-  // frame[5]         : ARG0 — varies by firmware revision:
-  //                      0x01  original firmware (e.g. node 0x48)
-  //                      0x80  alternate firmware (e.g. node 0x0B)
-  //                    We learn this value from the first valid status response
-  //                    and lock on to it for the session so we don't accidentally
-  //                    misinterpret unrelated frame types.
+  // frame[5]         : ARG0. Current captures confirm 0x01. We learn this value
+  //                    with the node address and only lock it after multiple
+  //                    matching status frames so we don't accidentally misinterpret
+  //                    unrelated frame types.
   if (frame[2] == 0x00 && frame[4] == 0x81) {
     const uint8_t arg0 = frame[5];
- 
-    // First time: learn whichever ARG0 variant the controller uses.
-    if (this->learned_arg0_ == 0x00) {
-      this->learned_arg0_ = arg0;
+    const uint8_t mask = frame[6] & 0x3F;
+    if ((frame[6] & 0xC0) != 0) {
       if (this->debug_) {
-        ESP_LOGD(TAG, "Learned protocol variant: frame[5]=0x%02X", arg0);
+        ESP_LOGW(TAG, "Ignoring status candidate with invalid zone mask: 0x%02X", frame[6]);
       }
-    }
- 
-    // Only process frames that match the learned variant.
-    if (arg0 != this->learned_arg0_) {
-      // Different ARG0 — not a status frame for this session; ignore silently.
       this->publish_diagnostics_();
       return true;
     }
+
+    if (!this->node_locked_) {
+      if (frame[1] == this->candidate_node_addr_ && arg0 == this->candidate_arg0_) {
+        if (this->candidate_confirmations_ < 0xFF) {
+          this->candidate_confirmations_++;
+        }
+      } else {
+        this->candidate_node_addr_ = frame[1];
+        this->candidate_arg0_ = arg0;
+        this->candidate_confirmations_ = 1;
+      }
+
+      this->node_addr_ = this->candidate_node_addr_;
+
+      if (this->debug_) {
+        ESP_LOGD(TAG, "Status candidate: node=0x%02X arg0=0x%02X confirmations=%u/%u", this->candidate_node_addr_,
+                 this->candidate_arg0_, this->candidate_confirmations_, this->node_confirmations_required_);
+      }
+
+      if (this->candidate_confirmations_ < this->node_confirmations_required_) {
+        this->publish_diagnostics_();
+        return true;
+      }
+
+      this->learned_arg0_ = this->candidate_arg0_;
+      this->node_locked_ = true;
+      if (this->debug_) {
+        ESP_LOGD(TAG, "Locked node address: node=0x%02X frame[5]=0x%02X", this->node_addr_, this->learned_arg0_);
+      }
+      this->save_locked_node_();
+    }
+
+    if (frame[1] != this->node_addr_ || arg0 != this->learned_arg0_) {
+      if (this->node_mismatch_count_ < 0xFF) {
+        this->node_mismatch_count_++;
+      }
+
+      if (this->debug_) {
+        ESP_LOGW(TAG, "Status node mismatch: got node=0x%02X arg0=0x%02X expected node=0x%02X arg0=0x%02X count=%u/%u",
+                 frame[1], arg0, this->node_addr_, this->learned_arg0_, this->node_mismatch_count_,
+                 this->node_mismatch_threshold_);
+      }
+
+      if (this->node_mismatch_count_ >= this->node_mismatch_threshold_) {
+        ESP_LOGW(TAG, "Node mismatch threshold reached; unlocking node and restarting autodetection");
+        this->node_locked_ = false;
+        this->learned_arg0_ = 0x00;
+        this->candidate_node_addr_ = frame[1];
+        this->candidate_arg0_ = arg0;
+        this->candidate_confirmations_ = 1;
+        this->node_addr_ = this->candidate_node_addr_;
+        this->node_mismatch_count_ = 0;
+        this->restored_node_valid_ = false;
+        this->has_status_ = false;
+        this->online_ = false;
+        this->waiting_for_response_ = false;
+        this->waiting_for_write_response_ = false;
+        this->pending_desired_ = false;
+        this->require_fresh_status_before_write_ = true;
+      }
+
+      this->publish_diagnostics_();
+      return true;
+    }
+
+    this->node_mismatch_count_ = 0;
 
     // Valid status response — process it.
     const uint8_t previous_mask = this->last_mask_;
@@ -293,8 +438,8 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
 
     this->node_addr_ = frame[1];
     this->last_seq_ = frame[3];
-    this->last_mask_ = frame[6] & 0x3F;
-    if (!this->has_status_ && !this->pending_desired_) {
+    this->last_mask_ = mask;
+    if (!this->pending_desired_) {
       this->desired_mask_ = this->last_mask_;
     }
     this->has_status_ = true;
@@ -328,6 +473,7 @@ void ZoneSwitch::loop() {
     if (!this->read_byte(&byte)) {
       break;
     }
+    this->last_rx_byte_ms_ = millis();
 
     if (this->rx_index_ == 0 && byte != 0xAA) {
       continue;

@@ -25,8 +25,12 @@ class ZoneSwitchDiagnosticSensor : public sensor::Sensor, public Component, publ
   void dump_config() override;
 
  protected:
+  void publish_if_changed_(float state);
+
   ZoneSwitch *parent_{nullptr};
   DiagnosticMetric metric_{DIAGNOSTIC_METRIC_NODE_ADDRESS};
+  bool has_published_state_{false};
+  float last_published_state_{0.0f};
 };
 
 }  // namespace zoneswitch

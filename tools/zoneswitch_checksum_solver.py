@@ -70,7 +70,7 @@ def parse_capture(path: Path) -> list[Frame]:
 
 def split_families(frames: list[Frame]) -> tuple[list[Frame], list[Frame]]:
     requests = [frame for frame in frames if frame.cmd == 0x01 and frame.arg0 == 0x00]
-    responses = [frame for frame in frames if frame.cmd == 0x81 and frame.arg0 == 0x01]
+    responses = [frame for frame in frames if frame.src == 0x00 and frame.cmd == 0x81]
     return requests, responses
 
 
@@ -196,7 +196,7 @@ def summarize_pairs(frames: list[Frame]) -> str:
 
         response = frames[index + 1]
         is_request = request.cmd == 0x01 and request.arg0 == 0x00
-        is_response = response.cmd == 0x81 and response.arg0 == 0x01
+        is_response = response.src == 0x00 and response.cmd == 0x81
         is_matching_pair = (
             is_request
             and is_response
@@ -280,11 +280,13 @@ def main() -> int:
     print(summarize_pairs(all_frames))
 
     print_family_report("REQUEST family (CMD=0x01,ARG0=0x00)", requests, full_crc=args.full_crc)
-    print_family_report("RESPONSE family (CMD=0x81,ARG0=0x01)", responses, full_crc=args.full_crc)
+    print_family_report("RESPONSE family (SRC=0x00,CMD=0x81)", responses, full_crc=args.full_crc)
 
     mask_values = sorted(set(frame.arg1_or_mask for frame in responses))
     req_arg_values = sorted(set(frame.arg1_or_mask for frame in requests))
+    rsp_arg0_values = sorted(set(frame.arg0 for frame in responses))
     print(f"\nrequest ARG1 values: {[hex(value) for value in req_arg_values]}")
+    print(f"response ARG0 values: {[hex(value) for value in rsp_arg0_values]}")
     print(f"response MASK values: {[hex(value) for value in mask_values]}")
 
     return 0

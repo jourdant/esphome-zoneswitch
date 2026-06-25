@@ -93,6 +93,11 @@ checksum”, not “valid status response received”. However, after the
 auto-detection change, a learned non-zero node address and/or an online status
 flag should be expected once valid controller traffic is present.
 
+Implementation note: to avoid locking onto a single accidental status-looking
+frame, the component now exposes the first discovered candidate node for
+diagnostics but only locks the node/`ARG0` pair after three matching status
+frames by default.
+
 ## Timing and sequencing (confirmed)
 
 - Observed cadence is approximately every 5 seconds at idle.
@@ -185,6 +190,7 @@ Recommended staged approach:
 Electrical guidance:
 - Use RS485 transceiver with receiver always enabled.
 - Keep TX disabled by default; enable only for short command burst windows.
+- Require a quiet inter-frame window before asserting TX.
 - Share ground reference with controller side.
 - Validate line polarity (A/B) and idle bias before enabling TX.
 

@@ -32,6 +32,13 @@ Further checked against `saved_rs485_packets3.md`:
 
 Write entities can now be implemented with standard safety guards.
 
+Current implementation safety updates:
+- Zone switch commands are ignored until a locked status frame initializes the live mask.
+- New switch intents are based on the latest `last_mask_` when no write is already pending, avoiding stale desired-mask diffs.
+- The first discovered node is exposed for diagnostics, but the node/`ARG0` pair is not locked until `node_confirmations` matching status frames are seen.
+- TX now requires a configurable UART idle window (`tx_idle_guard`) before transmitting.
+- RS485 driver-enable is held for a conservative post-`flush()` margin.
+
 ## Recommended ESPHome architecture
 
 ## UART settings
@@ -43,7 +50,8 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 1. `on_frame(frame)`:
    - Validate `len == 9`, `frame[0] == 0xAA`, `frame[8] == 0x55`
    - If `frame[2]==0x00 && frame[4]==0x81`:
-     - Learn and lock the response-side `frame[5]`/`ARG0` value for the session.
+    - Track candidate `node_addr` and response-side `frame[5]`/`ARG0` values.
+    - Lock the session only after `node_confirmations` matching status frames.
      - Current captures show `frame[5]==0x01` for status responses.
      - `node_addr = frame[1]`
      - `zone_mask = frame[6]`
@@ -75,6 +83,7 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 - Keep transmit disabled until runtime `node_addr` is learned from valid incoming responses.
 - Keep one authoritative poller on the bus to avoid collisions.
 - If enabling TX, rate-limit writes and enforce inter-frame gap.
+- Require a recent-RX idle window before each TX to reduce collision risk.
 - Preserve spill-function semantics; do not force all zones closed when spill is enabled.
 - When validating active TX, confirm that the node-address diagnostic changes from `0` to the learned controller node. If only `RX OK` increments, debug transceiver direction/echo/collision behavior before sending zone toggles.
 - The `saved_rs485_packets3.md` node-address value of `0` should be treated as pre-auto-detection behavior, not a current protocol limitation.
@@ -87,7 +96,7 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 
 2. Session-scoped node address
   - `NODE` can change between sessions.
-  - Safeguard: learn `node_addr` from valid inbound status frames before enabling writes.
+  - Safeguard: expose the first discovered `node_addr` for diagnostics, but do not lock it for active control until several matching frames confirm it.
 
 3. Bus collisions (physical touchpad + ESPHome)
   - Concurrent writes can corrupt or drop frames.
@@ -100,6 +109,10 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 5. Startup uncertainty
   - On boot, state may be unknown.
   - Safeguard: block writes until first valid status frame initializes `zone_mask`.
+
+6. Restoring discovered node address
+  - A restored node could save discovery time, but captures show the node is session-scoped and may change.
+  - Safeguard if implemented later: restore only as a fallback candidate, require fresh confirmations before writes, and invalidate the restored node after missed responses.
 
 ## Wiring notes for T2 emulation
 
@@ -114,6 +127,9 @@ Use same UART settings as your known-good capture config. Keep transport half-du
 - [x] Capture write command(s) for zone toggle
 - [x] Solve checksum algorithm from mixed traffic
 - [x] Validate component-generated idle poll checksums against the checksum model
+- [x] Guard stale desired-mask writes
+- [x] Require multiple node confirmations before locking autodetected address
+- [x] Add TX idle-window guard
 - [ ] Retest active poll with auto-detection and confirm node address updates
 - [x] Implement ESPHome write path and HA switches
 - [ ] Validate coexistence with physical touchpad on T1

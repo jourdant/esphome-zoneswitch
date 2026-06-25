@@ -34,10 +34,17 @@
 6. Debounce write intents at protocol layer
    - Queue desired state changes
    - Apply at protocol cadence (poll cycle) rather than sending each UI click instantly
+   - Base new desired masks on the latest confirmed hardware mask when no write is pending
 
 7. Support dynamic addressing when protocol allows
    - Learn session/node address from validated responses
    - Allow configurable fallback node for bootstrap cases
+   - Require several matching responses before locking a learned node address
+   - Treat restored/persisted node addresses as fallback candidates only unless freshly confirmed
+
+8. Guard RS485 transmit timing
+   - Require a quiet RX window before transmitting to reduce collision risk
+   - On ESPHome ESP32 UART, `flow_control_pin` enables RS485 half-duplex support and `flush()` waits for TX FIFO drain; hold DE for an additional conservative frame-time margin after `flush()` if no TX-complete callback is available
 
 8. Child entities should be explicit and stable
    - Require explicit zone numbers and IDs in YAML for HA stability
