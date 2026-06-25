@@ -20,25 +20,34 @@ void ZoneSwitchDiagnosticSensor::dump_config() {
   ESP_LOGCONFIG(TAG, "  Metric: %s", metric_name);
 }
 
+void ZoneSwitchDiagnosticSensor::publish_if_changed_(float state) {
+  if (this->has_published_state_ && this->last_published_state_ == state)
+    return;
+
+  this->has_published_state_ = true;
+  this->last_published_state_ = state;
+  this->publish_state(state);
+}
+
 void ZoneSwitchDiagnosticSensor::on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count,
                                                        uint32_t rx_bad_count) {
   if (this->metric_ == DIAGNOSTIC_METRIC_NODE_ADDRESS) {
-    this->publish_state((float) node_addr);
+    this->publish_if_changed_((float) node_addr);
     return;
   }
 
   if (this->metric_ == DIAGNOSTIC_METRIC_ONLINE) {
-    this->publish_state(online ? 1.0f : 0.0f);
+    this->publish_if_changed_(online ? 1.0f : 0.0f);
     return;
   }
 
   if (this->metric_ == DIAGNOSTIC_METRIC_RX_OK) {
-    this->publish_state((float) rx_ok_count);
+    this->publish_if_changed_((float) rx_ok_count);
     return;
   }
 
   if (this->metric_ == DIAGNOSTIC_METRIC_RX_BAD) {
-    this->publish_state((float) rx_bad_count);
+    this->publish_if_changed_((float) rx_bad_count);
   }
 }
 

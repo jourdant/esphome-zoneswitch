@@ -15,6 +15,15 @@ void ZoneSwitchTextSensor::dump_config() {
   ESP_LOGCONFIG(TAG, "  Format: %s", this->format_ == TEXT_SENSOR_FORMAT_HEX ? "hex" : "decimal");
 }
 
+void ZoneSwitchTextSensor::publish_if_changed_(uint8_t node_addr, const char *state) {
+  if (this->has_published_state_ && this->last_published_node_addr_ == node_addr)
+    return;
+
+  this->has_published_state_ = true;
+  this->last_published_node_addr_ = node_addr;
+  this->publish_state(state);
+}
+
 void ZoneSwitchTextSensor::on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count,
                                                   uint32_t rx_bad_count) {
   if (this->metric_ == TEXT_SENSOR_METRIC_NODE_ADDRESS) {
@@ -24,7 +33,7 @@ void ZoneSwitchTextSensor::on_diagnostics_update(uint8_t node_addr, bool online,
     } else {
       snprintf(buf, sizeof(buf), "%u", node_addr);
     }
-    this->publish_state(buf);
+    this->publish_if_changed_(node_addr, buf);
   }
 }
 

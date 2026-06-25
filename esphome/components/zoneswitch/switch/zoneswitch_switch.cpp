@@ -7,7 +7,16 @@ namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch.switch";
 
-void ZoneSwitchSwitch::setup() { this->publish_state(false); }
+void ZoneSwitchSwitch::setup() { this->publish_if_changed_(false); }
+
+void ZoneSwitchSwitch::publish_if_changed_(bool state) {
+  if (this->has_published_state_ && this->last_published_state_ == state)
+    return;
+
+  this->has_published_state_ = true;
+  this->last_published_state_ = state;
+  this->publish_state(state);
+}
 
 void ZoneSwitchSwitch::dump_config() {
   LOG_SWITCH("", "ZoneSwitch Switch", this);
@@ -19,7 +28,7 @@ void ZoneSwitchSwitch::on_mask_update(uint8_t mask) {
     return;
 
   const uint8_t bit = (uint8_t) (1 << (this->zone_ - 1));
-  this->publish_state((mask & bit) != 0);
+  this->publish_if_changed_((mask & bit) != 0);
 }
 
 void ZoneSwitchSwitch::write_state(bool state) {

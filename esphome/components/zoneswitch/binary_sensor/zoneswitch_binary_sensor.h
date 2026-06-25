@@ -29,9 +29,13 @@ class ZoneSwitchBinarySensor
   void setup() override;
 
  protected:
+  void publish_if_changed_(bool state);
+
   ZoneSwitch *parent_{nullptr};
   uint8_t zone_{1};
   BinarySensorMetric type_{BINARY_SENSOR_METRIC_ZONE};
+  bool has_published_state_{false};
+  bool last_published_state_{false};
 };
 
 }  // namespace zoneswitch

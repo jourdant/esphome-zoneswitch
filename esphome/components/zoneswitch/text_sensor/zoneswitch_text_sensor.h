@@ -28,9 +28,13 @@ class ZoneSwitchTextSensor : public text_sensor::TextSensor, public Component, p
   void dump_config() override;
 
  protected:
+  void publish_if_changed_(uint8_t node_addr, const char *state);
+
   ZoneSwitch *parent_{nullptr};
   TextSensorMetric metric_{TEXT_SENSOR_METRIC_NODE_ADDRESS};
   TextSensorFormat format_{TEXT_SENSOR_FORMAT_HEX};
+  bool has_published_state_{false};
+  uint8_t last_published_node_addr_{0};
 };
 
 }  // namespace zoneswitch

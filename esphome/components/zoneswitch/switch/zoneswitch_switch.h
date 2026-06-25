@@ -19,9 +19,12 @@ class ZoneSwitchSwitch : public switch_::Switch, public Component, public ZoneSw
 
  protected:
   void write_state(bool state) override;
+  void publish_if_changed_(bool state);
 
   ZoneSwitch *parent_{nullptr};
   uint8_t zone_{1};
+  bool has_published_state_{false};
+  bool last_published_state_{false};
 };
 
 }  // namespace zoneswitch

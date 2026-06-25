@@ -7,7 +7,16 @@ namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch.binary_sensor";
 
-void ZoneSwitchBinarySensor::setup() { this->publish_state(false); }
+void ZoneSwitchBinarySensor::setup() { this->publish_if_changed_(false); }
+
+void ZoneSwitchBinarySensor::publish_if_changed_(bool state) {
+  if (this->has_published_state_ && this->last_published_state_ == state)
+    return;
+
+  this->has_published_state_ = true;
+  this->last_published_state_ = state;
+  this->publish_state(state);
+}
 
 void ZoneSwitchBinarySensor::dump_config() {
   LOG_BINARY_SENSOR("", "ZoneSwitch Binary Sensor", this);
@@ -27,7 +36,7 @@ void ZoneSwitchBinarySensor::on_mask_update(uint8_t mask) {
     return;
 
   const uint8_t bit = (uint8_t) (1 << (this->zone_ - 1));
-  this->publish_state((mask & bit) != 0);
+  this->publish_if_changed_((mask & bit) != 0);
 }
 
 void ZoneSwitchBinarySensor::on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count,
@@ -38,7 +47,7 @@ void ZoneSwitchBinarySensor::on_diagnostics_update(uint8_t node_addr, bool onlin
   if (this->type_ != BINARY_SENSOR_METRIC_ONLINE)
     return;
 
-  this->publish_state(online);
+  this->publish_if_changed_(online);
 }
 
 }  // namespace zoneswitch
