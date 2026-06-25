@@ -6,6 +6,9 @@ Research and tooling for decoding the Polyaire ZoneSwitch V2 touchpad/main-modul
 - Module used: ESP32-S3-RS485-CAN https://www.aliexpress.com/item/1005010428752299.html
 > **_NOTE:_** In theory any ESP32 and RS485 modules can be used as long as you make relevent changes to the yaml.
 
+### Tested panel
+![alt text](docs/assets/zonemaster.png "Tested panel")
+
 ### Wiring diagram:
 ![alt text](docs/assets/schematic.jpg "Wiring diagram")
 
