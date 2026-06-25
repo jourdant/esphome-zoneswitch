@@ -105,29 +105,22 @@ void ZoneSwitch::request_zone_state(uint8_t zone, bool target_on) {
   this->pending_desired_ = true;
 }
 
-static uint8_t reflect8(uint8_t value) {
-  uint8_t reflected = 0;
-  for (uint8_t bit = 0; bit < 8; bit++) {
-    if (value & (1 << bit))
-      reflected |= (1 << (7 - bit));
-  }
-  return reflected;
-}
-
 uint8_t ZoneSwitch::crc8_maxim_(const uint8_t *data, size_t len) {
+  // CRC-8/MAXIM (1-Wire): poly=0x31, refin=true, refout=true.
+  // Using the equivalent LSB-first algorithm with the reflected polynomial
+  // (0x8C) avoids per-byte bit-reversal and is both faster and simpler.
   uint8_t crc = 0x00;
   for (size_t i = 0; i < len; i++) {
-    uint8_t current = reflect8(data[i]);
-    crc ^= current;
+    crc ^= data[i];
     for (uint8_t bit = 0; bit < 8; bit++) {
-      if (crc & 0x80) {
-        crc = (uint8_t) (((crc << 1) ^ 0x31) & 0xFF);
+      if (crc & 0x01) {
+        crc = (crc >> 1) ^ 0x8C;
       } else {
-        crc = (uint8_t) ((crc << 1) & 0xFF);
+        crc >>= 1;
       }
     }
   }
-  return reflect8(crc);
+  return crc;
 }
 
 void ZoneSwitch::publish_mask_(uint8_t mask) {
@@ -189,6 +182,13 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
     return false;
   }
 
+  if (this->flow_control_pin_ != nullptr && this->tx_de_assert_pending_) {
+    if (this->debug_) {
+      ESP_LOGD(TAG, "Deferring TX because DE pin is still asserted");
+    }
+    return false;
+  }
+
   if (this->available() > 0) {
     if (this->debug_) {
       ESP_LOGD(TAG, "Deferring TX because RX data is pending");
@@ -213,6 +213,9 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
   frame[1] = 0x00;
   frame[2] = node;
   frame[3] = this->tx_seq_++;
+  // Skip sequence number 0x00 to avoid confusion with uninitialised state.
+  if (this->tx_seq_ == 0x00)
+    this->tx_seq_ = 0x01;
   frame[4] = 0x01;
   frame[5] = 0x00;
   frame[6] = arg1;
@@ -229,10 +232,11 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
   this->flush();
 
   if (this->flow_control_pin_ != nullptr) {
-    // ESPHome UART flush waits for TX FIFO drain, but keep DE asserted for a
-    // conservative extra frame-time margin at the documented 9600-baud protocol rate.
-    delay(this->tx_de_assert_delay_ms_);
-    this->flow_control_pin_->digital_write(false);
+    // ESPHome UART flush waits for TX FIFO drain. Schedule non-blocking DE
+    // de-assertion after a conservative extra frame-time margin; service_flow_control_()
+    // will lower the pin in loop() once the guard window has elapsed.
+    this->tx_de_assert_at_ms_ = millis() + this->tx_de_assert_delay_ms_;
+    this->tx_de_assert_pending_ = true;
   }
 
   if (this->debug_) {
@@ -465,7 +469,21 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
   return true;
 }
 
+void ZoneSwitch::service_flow_control_() {
+  if (!this->tx_de_assert_pending_)
+    return;
+  if (this->flow_control_pin_ == nullptr) {
+    this->tx_de_assert_pending_ = false;
+    return;
+  }
+  if (millis() >= this->tx_de_assert_at_ms_) {
+    this->flow_control_pin_->digital_write(false);
+    this->tx_de_assert_pending_ = false;
+  }
+}
+
 void ZoneSwitch::loop() {
+  this->service_flow_control_();
   this->run_poll_cycle_();
 
   while (this->available()) {
