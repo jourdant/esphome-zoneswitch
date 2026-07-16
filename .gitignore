@@ -23,3 +23,6 @@ venv/
 # Editor
 .vscode/*
 !.vscode/.gitignore
+
+.vexp
+.github
