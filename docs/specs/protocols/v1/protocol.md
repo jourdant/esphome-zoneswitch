@@ -4,9 +4,9 @@
 
 Bench captures on 2026-09-16 established 250000 baud, 8N1, noninverted UART.
 The PCB marking is V1.0-T; this is separate from the V2.1 protocol.
-[All zones](../../research/v1/2026-09-16_user-all-six-zones.md),
-[startup](../../research/v1/2026-09-16_startup-captures.md), and
-[acknowledged software transactions](../../research/v1/2026-09-16_direct-fifo-results.md)
+[All zones](../../../research/v1/2026-09-16_user-all-six-zones.md),
+[startup](../../../research/v1/2026-09-16_startup-captures.md), and
+[acknowledged software transactions](../../../research/v1/2026-09-16_direct-fifo-results.md)
 are the source observations. Hardware controls were installed on zones 2–5.
 
 Shared-bus physical capture: `C0 30 MASK 08 Z1 Z2 Z3 Z4 Z5 Z6 CHECK`.
@@ -41,7 +41,7 @@ The shared component is the only direction-pin owner. It starts in receive.
 After a 20 ms receive quiet guard, each transaction sends C0, requires ACK 30,
 and sends one mask. A full status must arrive within 250 ms. Incomplete received
 frames expire after 20 ms; transactions are separated by at least one second.
-Startup requests one status. Periodic polling defaults off. The refresh button
+Unless `listen_only: true`, startup requests one status. Periodic polling defaults off. The refresh button
 requests one status; repeated refresh presses are coalesced.
 
 An absolute ON/OFF request first queries state. If already satisfied it does not

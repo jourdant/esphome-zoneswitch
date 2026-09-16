@@ -1,0 +1,30 @@
+name: Bug report
+description: Report a ZoneSwitch configuration, receive or control problem.
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware and versions
+      description: PCB revision, protocol, adapter, ESPHome/framework version and component commit/tag.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Expected versus observed behavior, steps to reproduce, physical button/LED behavior, and controller state versus airflow.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Sanitized configuration
+      description: Include UART pins/baud/framing, direction ownership, hub and affected entities. Remove passwords, API keys and private addresses.
+      render: yaml
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs and observations
+      description: Include transaction diagnostics and timestamps; say whether listen-only changes the behavior.
+      render: text

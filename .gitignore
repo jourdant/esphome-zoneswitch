@@ -25,7 +25,8 @@ venv/
 !.vscode/.gitignore
 
 .vexp
-.github
+.github/*
+!.github/ISSUE_TEMPLATE/
 # Local ESPHome build products and private device configuration
 .esphome/
 secrets.yaml

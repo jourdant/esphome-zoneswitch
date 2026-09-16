@@ -1,5 +1,11 @@
 # ESPHome Plan: ZoneSwitch Touchpad2 Emulation
 
+> Historical investigation plan. V2 is now confirmed fully working on V2.1 hardware.
+> The checklist below records the investigation at the time it was written.
+> For current behavior, use the [V2 specification](protocol.md) and
+> [setup guide](../../../guides/v2.1.md).
+
+
 ## Objective
 
 Create an ESPHome node on Touchpad port T2 that:

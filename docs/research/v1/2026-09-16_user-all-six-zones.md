@@ -19,4 +19,7 @@ User-provided 2026-09-16, 250000 baud, 8N1, receive-only. User identifies the fi
 17:55:48.876 C0 30 10 08 00 81 02 03 84 05 17
 ```
 
-All 14 eight-byte replies pass the additive checksum and contain six indexed state bytes. User says only “zones 2-4” have been set up on the faceplate, and calls 1 and 6 “the other 2”; this leaves zone 5's installed role ambiguous. Do not infer damper population from these logs. Logical states are observed for all six positions.
+All 14 eight-byte replies pass the additive checksum and contain six indexed state bytes.
+The user subsequently clarified that installed zones are **2–5**; zones 1 and 6
+are not known to have dampers connected. Logical states are observed for all six
+positions; the captures do not prove physical damper movement.
