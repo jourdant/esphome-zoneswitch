@@ -1,0 +1,170 @@
+# V1.0-T / XIAO carrier: wall LEDs may be stale and physical buttons impaired.
+# No periodic polling. One startup query; each ON/OFF command queries first.
+# Keep ordinary USB power and carrier VIN mutually exclusive.
+substitutions:
+  device_name: xiao-zoneswitch-01
+  friendly_name: ZoneSwitch 01
+  onboard_update_interval: 60s
+  rs485_baud_rate: '250000'
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.8.0
+  project:
+    name: bitlab.xiao-485
+    version: zoneswitch-v1
+  on_boot:
+  - priority: -100
+    then:
+    - light.turn_on: onboard_led
+esp32:
+  variant: esp32s3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: xiao-zoneswitch Fallback Hotspot
+    password: !secret wifi_password
+captive_portal: null
+api:
+  encryption:
+    key: !secret xiao_485_zoneswitch_api_key
+ota:
+- platform: esphome
+  password: !secret xiao_485_zoneswitch_ota_password
+logger:
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
+i2c:
+  id: board_i2c
+  sda: GPIO5
+  scl: GPIO6
+  frequency: 100kHz
+  scan: true
+spi:
+  id: h1_spi
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+  miso_pin: GPIO8
+light:
+- platform: status_led
+  id: onboard_led
+  name: Onboard LED
+  icon: mdi:led-on
+  pin:
+    number: GPIO21
+    inverted: true
+  restore_mode: ALWAYS_OFF
+sensor:
+- platform: sht4x
+  id: onboard_sht40
+  i2c_id: board_i2c
+  address: 68
+  precision: High
+  heater_max_duty: 0.0
+  update_interval: ${onboard_update_interval}
+  temperature:
+    name: Onboard temperature
+    id: onboard_temperature
+  humidity:
+    name: Onboard relative humidity
+    id: onboard_humidity
+- platform: opt3001
+  id: onboard_opt3001
+  i2c_id: board_i2c
+  address: 69
+  name: Onboard illuminance
+  update_interval: ${onboard_update_interval}
+- platform: wifi_signal
+  name: Wi-Fi signal
+  update_interval: 60s
+  entity_category: diagnostic
+- platform: uptime
+  name: Uptime
+  update_interval: 60s
+  entity_category: diagnostic
+- platform: zoneswitch
+  id: zoneswitch_rx_ok
+  zoneswitch_id: zoneswitch_bus
+  metric: rx_ok
+  name: ZoneSwitch valid frames
+  entity_category: diagnostic
+- platform: zoneswitch
+  id: zoneswitch_rx_bad
+  zoneswitch_id: zoneswitch_bus
+  metric: rx_bad
+  name: ZoneSwitch rejected frames
+  entity_category: diagnostic
+button:
+- platform: restart
+  name: Restart
+  entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zoneswitch_bus
+  name: Refresh zone state
+  entity_category: diagnostic
+external_components:
+- source:
+    type: git
+    url: https://github.com/jourdant/esphome-zoneswitch
+    ref: codex/protocol-v1-v2
+  components:
+  - zoneswitch
+  refresh: 0s
+uart:
+  id: rs485_uart
+  tx_pin: GPIO43
+  rx_pin: GPIO44
+  baud_rate: ${rs485_baud_rate}
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  rx_buffer_size: 256
+  rx_full_threshold: 1
+  flush_timeout: 100ms
+zoneswitch:
+- id: zoneswitch_bus
+  uart_id: rs485_uart
+  protocol: v1
+  flow_control_pin: GPIO4
+  enable_polling: false
+  status_timeout: 0s
+  tx_idle_guard: 20ms
+  spill_zone: 0
+  debug: true
+switch:
+- platform: zoneswitch
+  id: zone_2
+  zoneswitch_id: zoneswitch_bus
+  zone: 2
+  name: Zone 2
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_3
+  zoneswitch_id: zoneswitch_bus
+  zone: 3
+  name: Zone 3
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_4
+  zoneswitch_id: zoneswitch_bus
+  zone: 4
+  name: Zone 4
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_5
+  zoneswitch_id: zoneswitch_bus
+  zone: 5
+  name: Zone 5
+  icon: mdi:air-filter
+binary_sensor:
+- platform: zoneswitch
+  id: zoneswitch_online
+  zoneswitch_id: zoneswitch_bus
+  metric: online
+  name: ZoneSwitch gateway online
+  device_class: connectivity
+  entity_category: diagnostic

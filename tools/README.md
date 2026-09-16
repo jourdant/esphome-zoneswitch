@@ -51,3 +51,9 @@ For each input, the script writes:
 - `--format markdown|text`
 - `--poll-interval 1.0`
 - `--timeout 300`
+
+## Protocol versions
+
+`zoneswitch_checksum_solver.py` analyses **V2** CRC-8/MAXIM captures in
+`docs/research/v2/captures/`. It does not decode V1 handshakes or their candidate
+additive checksum. V1 evidence lives in `docs/research/v1/`.

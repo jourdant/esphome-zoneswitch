@@ -1,0 +1,50 @@
+esphome:
+  name: zoneswitch-test-v2
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+external_components:
+  - source:
+      type: local
+      path: ../esphome/components
+    components: [zoneswitch]
+uart:
+  id: test_uart
+  tx_pin: GPIO43
+  rx_pin: GPIO44
+  baud_rate: 9600
+  flow_control_pin: GPIO4
+zoneswitch:
+  id: test_zs
+  uart_id: test_uart
+switch:
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    zone: 2
+    name: Zone 2
+button:
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    name: Refresh
+sensor:
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: rx_ok
+    name: Valid frames
+binary_sensor:
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: online
+    name: Online
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    zone: 2
+    name: Zone 2 status
+text_sensor:
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: node_address
+    name: Node

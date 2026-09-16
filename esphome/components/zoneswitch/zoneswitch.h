@@ -8,6 +8,8 @@
 namespace esphome {
 namespace zoneswitch {
 
+enum class Protocol : uint8_t { V1, V2 };
+
 class ZoneSwitchMaskListener {
  public:
   virtual void on_mask_update(uint8_t mask) = 0;
@@ -15,7 +17,7 @@ class ZoneSwitchMaskListener {
 
  protected:
   friend class ZoneSwitch;
-  ZoneSwitchMaskListener *next_mask_listener_{nullptr};
+  ZoneSwitchMaskListener* next_mask_listener_{nullptr};
 };
 
 class ZoneSwitchDiagnosticListener {
@@ -25,7 +27,7 @@ class ZoneSwitchDiagnosticListener {
 
  protected:
   friend class ZoneSwitch;
-  ZoneSwitchDiagnosticListener *next_diagnostic_listener_{nullptr};
+  ZoneSwitchDiagnosticListener* next_diagnostic_listener_{nullptr};
 };
 
 class ZoneSwitch : public uart::UARTDevice, public Component {
@@ -35,12 +37,15 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   void dump_config() override;
   void loop() override;
 
-  void register_zone(ZoneSwitchMaskListener *zone);
-  void register_switch(ZoneSwitchMaskListener *zone_switch);
-  void register_diagnostic(ZoneSwitchDiagnosticListener *diagnostic);
+  void register_zone(ZoneSwitchMaskListener* zone);
+  void register_switch(ZoneSwitchMaskListener* zone_switch);
+  void register_diagnostic(ZoneSwitchDiagnosticListener* diagnostic);
   void request_zone_state(uint8_t zone, bool target_on);
+  void request_refresh() { this->refresh_requested_ = true; }
+  void set_protocol(Protocol protocol) { this->protocol_ = protocol; }
+  void set_v1_direction_pin(uint8_t pin) { this->v1_direction_pin_ = pin; }
 
-  void set_flow_control_pin(GPIOPin *flow_control_pin) { this->flow_control_pin_ = flow_control_pin; }
+  void set_flow_control_pin(GPIOPin* flow_control_pin) { this->flow_control_pin_ = flow_control_pin; }
   void set_debug(bool debug) { this->debug_ = debug; }
   void set_poll_interval(uint32_t interval_ms) { this->poll_interval_ms_ = interval_ms; }
   void set_tx_node_addr(uint8_t tx_node_addr) { this->tx_node_addr_ = tx_node_addr; }
@@ -60,8 +65,25 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   bool is_online() const { return this->online_; }
 
  protected:
-  static uint8_t crc8_maxim_(const uint8_t *data, size_t len);
-  bool handle_frame_(const uint8_t *frame);
+  void loop_v1_();
+  void receive_v1_byte_(uint8_t byte);
+  bool handle_v1_status_(const uint8_t* frame);
+  void fail_v1_transaction_();
+  // Virtual boundary supports deterministic host tests without ESP-IDF hardware.
+  virtual bool transact_v1_(uint8_t mask);
+  bool send_v1_byte_(uint8_t byte);
+
+  Protocol protocol_{Protocol::V2};
+  bool refresh_requested_{false};
+  uint8_t v1_direction_pin_{0};
+  uint8_t v1_pending_zone_{0};
+  uint8_t v1_prefix_index_{0};
+  bool v1_target_on_{false};
+  bool v1_write_ready_{false};
+  bool v1_has_tx_{false};
+
+  static uint8_t crc8_maxim_(const uint8_t* data, size_t len);
+  bool handle_frame_(const uint8_t* frame);
   void publish_mask_(uint8_t mask);
   void publish_diagnostics_(bool force = false);
   void run_poll_cycle_();
@@ -81,7 +103,7 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
     uint8_t arg0;
   };
 
-  GPIOPin *flow_control_pin_{nullptr};
+  GPIOPin* flow_control_pin_{nullptr};
   bool debug_{false};
 
   uint8_t rx_frame_[9]{};
@@ -107,7 +129,7 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint8_t node_mismatch_threshold_{5};
   uint8_t restored_node_addr_{0x00};
   uint8_t restored_arg0_{0x00};
- 
+
   bool has_status_{false};
   bool node_locked_{false};
   bool restore_node_{false};
@@ -145,8 +167,8 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
 
   ESPPreferenceObject node_pref_{};
 
-  ZoneSwitchMaskListener *mask_listeners_{nullptr};
-  ZoneSwitchDiagnosticListener *diagnostic_listeners_{nullptr};
+  ZoneSwitchMaskListener* mask_listeners_{nullptr};
+  ZoneSwitchDiagnosticListener* diagnostic_listeners_{nullptr};
   uint8_t zone_count_{0};
   uint8_t switch_count_{0};
 };

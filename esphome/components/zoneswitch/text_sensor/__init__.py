@@ -1,7 +1,8 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import text_sensor
 from esphome.const import CONF_ID
+
+from esphome.components import text_sensor
 
 from .. import ZoneSwitch, zoneswitch_ns
 
@@ -34,7 +35,9 @@ CONFIG_SCHEMA = (
             cv.GenerateID(): cv.declare_id(ZoneSwitchTextSensor),
             cv.GenerateID(CONF_ZONESWITCH_ID): cv.use_id(ZoneSwitch),
             cv.Required(CONF_METRIC): cv.enum(TEXT_SENSOR_METRICS, lower=True),
-            cv.Optional(CONF_FORMAT, default="hex"): cv.enum(TEXT_SENSOR_FORMATS, lower=True),
+            cv.Optional(CONF_FORMAT, default="hex"): cv.enum(
+                TEXT_SENSOR_FORMATS, lower=True
+            ),
         }
     )
     .extend(cv.COMPONENT_SCHEMA)

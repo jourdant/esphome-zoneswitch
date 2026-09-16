@@ -26,3 +26,7 @@ venv/
 
 .vexp
 .github
+# Local ESPHome build products and private device configuration
+.esphome/
+secrets.yaml
+*.private.yaml

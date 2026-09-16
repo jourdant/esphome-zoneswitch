@@ -3,7 +3,15 @@
 Open engineering and reverse-engineering tasks that are worth keeping visible,
 but are not required for the current safe-control implementation.
 
-## Protocol validation
+## V1 coexistence and validation
+
+- Capture wall TX/RX/DE with the Saleae Logic 8 to attribute C0/30/mask timing.
+- Resolve stale wall LEDs and temporarily unresponsive buttons after external queries.
+- Verify the checksum with evidence beyond high-bit state changes.
+- Establish response correlation/collision behavior before adding retries or frequent polling.
+- Validate the integrated component on hardware; successful manual handshake probes are not a reliability qualification.
+
+## V2 protocol validation
 
 ### Validate response `ARG0` variants with new captures
 

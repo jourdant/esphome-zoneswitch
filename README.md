@@ -1,426 +1,172 @@
-# ZoneSwitch Reverse Engineering Workspace
+# ESPHome ZoneSwitch — V1 and V2
 
-Research and tooling for decoding the Polyaire ZoneSwitch V2 touchpad/main-module protocol and building an ESPHome integration.
+Control Polyaire ZoneSwitch zones through an RS485 transceiver and expose
+controller-reported states to Home Assistant. Choose the protocol from the
+wall PCB revision: **V2 is the default**; **V1 is experimental**.
 
-## Hardware & ESPHome setup
-- Module used: ESP32-S3-RS485-CAN https://www.aliexpress.com/item/1005010428752299.html
-> **_NOTE:_** In theory any ESP32 and RS485 modules can be used as long as you make relevent changes to the yaml.
+| | V1 | V2 (default) |
+|---|---|---|
+| Observed wall PCB | V1.0-T | V2.1 |
+| UART | 250000 baud, 8N1 | 9600 baud, 8N1 |
+| Exchange | C0 → ACK 30 → toggle mask; 8-byte status | AA…55, 9-byte frames, CRC-8/MAXIM |
+| Transport | ESP32-S3 / ESP-IDF, component-managed DE | Existing ESPHome UART transport |
+| Node address | None observed | Learned address, optional persisted candidate |
+| Default polling | Off; one startup query | On, every 5 seconds |
+| Wall coexistence | LEDs may remain stale; buttons may temporarily stop responding | Existing V2 implementation retained |
 
-### Tested panel
-![alt text](docs/assets/zonemaster.png "Tested panel")
+**V1 caveat:** bench commands changed controller-reported state, but external
+queries alone could disturb the wall panel. Repeated physical presses or a panel
+restart recovered it. This implementation does not fix that issue. HA state is
+neither proof of damper movement nor a guarantee that wall LEDs match.
 
-### Wiring diagram:
-![alt text](docs/assets/schematic.jpg "Wiring diagram")
+## Configure the component
 
-### Connector Labels:
-![alt text](docs/assets/labels.jpg "Connector Labels")
+Add the external source and one protocol-specific UART/hub configuration:
 
-### Back side of the panel, ready to wire the module
-![alt text](docs/assets/back.png "Back side of the panel")
-
-### Drill to the mounting bracket to slide in the module
-![alt text](docs/assets/drilling.png "Drilling to fit the module")
-
-### Final look
-![alt text](docs/assets/ready.png "Final look")
-
-### ESPHome quick start:
 ```yaml
-esphome:
-  name: ws-esp32s3-02
-  friendly_name: ws esp32s3 02
-  platformio_options:
-    board_build.flash_mode: dio
-
-esp32:
-  board: esp32-s3-devkitc-1
-  framework:
-    type: arduino
-  flash_size: 16MB
-
-# Disable logging
-logger:
-  baud_rate: 0   # IMPORTANT (UART conflict prevention)
-
 external_components:
   - source:
       type: git
       url: https://github.com/jourdant/esphome-zoneswitch
-      ref: main
-    components: [ "zoneswitch" ]
-    refresh: 0s
+      ref: codex/protocol-v1-v2
+    components: [zoneswitch]
+```
 
+Pin a tested commit instead of a moving branch for reproducible installations.
+Use ESPHome 2026.8.2 or newer; this branch is validated against 2026.8.2.
+
+### V2 — default
+
+```yaml
 uart:
-  - id: zoneswitch_uart
-    tx_pin: GPIO17
-    rx_pin: GPIO18
-    baud_rate: 9600
-    data_bits: 8
-    parity: NONE
-    stop_bits: 1
-    # ESP32 UART-level RS485 driver-enable control. Preferred when your
-    # transceiver DE/RE pin is connected to the ESP.
-    flow_control_pin: GPIO21
+  id: zoneswitch_uart
+  tx_pin: GPIO17
+  rx_pin: GPIO18
+  baud_rate: 9600
+  flow_control_pin: GPIO21
 
 zoneswitch:
-  - id: zs_bus
-    # Required: UART bus connected to the ZoneSwitch RS485 lines.
-    uart_id: zoneswitch_uart
-    # Optional: emit verbose protocol logs. Keep false for normal operation.
-    debug: false
-    # Optional: send periodic protocol polls in addition to passive decoding.
-    enable_polling: true
-    # Optional: interval between active polls/writes. Lower values react faster
-    # but add more traffic to the bus.
-    poll_interval: 1s
-    # Optional: require the bus RX side to be quiet for this long before TX.
-    # Helps reduce collisions on a shared half-duplex RS485 bus.
-    tx_idle_guard: 20ms
-    # Optional: number of matching status frames required before locking the
-    # autodetected node address and enabling control writes.
-    node_confirmations: 3
-    # Optional: consecutive locked-node mismatches before dropping the learned
-    # address and restarting autodetection.
-    node_mismatch_threshold: 5
-    # Optional: fallback node to use before autodetection locks a node. Set to 0
-    # for passive-only learning unless restore_node provides a candidate.
-    tx_node_addr: 0x48
-    # Optional: persist the last confirmed node and restore it on boot as an
-    # untrusted fallback candidate. Fresh confirmations are still required
-    # before zone writes are enabled.
-    restore_node: false
-    # Optional: component-managed DE/RE control pin. Usually leave unset if you
-    # use uart.flow_control_pin above.
-    # flow_control_pin: GPIO21
-    # Optional: missed active responses before marking the gateway offline.
-    offline_miss_threshold: 5
-    # Optional: mark the gateway offline after this long without valid status,
-    # including when enable_polling is false.
-    status_timeout: 30s
-    # Optional: batch RX diagnostic counter publications to reduce API traffic.
-    # Node and online changes are still published immediately.
-    diagnostic_update_interval: 10s
-    # Optional: set to 1..6 if the controller has a known hardware spill zone.
-    # Set to 0 to disable spill-zone guarding.
-    spill_zone: 0
+  id: zs_bus
+  uart_id: zoneswitch_uart
+  protocol: v2  # Optional; existing configurations default to V2.
+```
 
+GPIO numbers above are examples. See the [V2 configuration](esphome/examples/v2.yaml),
+[V2 protocol](docs/protocols/v2/protocol.md) and
+[V2 wiring photographs](docs/hardware/v2.md).
+
+### V1 — XIAO ESP32-S3 carrier
+
+```yaml
+uart:
+  id: zoneswitch_uart
+  tx_pin: GPIO43
+  rx_pin: GPIO44
+  baud_rate: 250000
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  rx_full_threshold: 1
+  # No UART flow_control_pin: the component owns direction.
+
+zoneswitch:
+  id: zs_bus
+  uart_id: zoneswitch_uart
+  protocol: v1
+  flow_control_pin: GPIO4
+  enable_polling: false
+  status_timeout: 0s
+```
+
+V1 requires `esp32.variant: esp32s3` and `framework.type: esp-idf`.
+GPIO4 must drive tied DE and /RE: HIGH transmits, LOW receives. Remove earlier
+GPIO4 outputs, diagnostic scripts, UART buttons and TCP bridges. The component
+must exclusively own this UART's TX. If UART debugging is enabled, set
+`dummy_receiver: false`. Its output omits the direct-FIFO TX and consumed ACK;
+`zoneswitch.debug: true` logs completed handshakes instead.
+
+See the [V1 configuration](esphome/examples/v1.yaml),
+[complete XIAO device YAML](esphome/examples/v1-xiao-all-in-one.yaml), and
+[V1 protocol and limitations](docs/protocols/v1/protocol.md).
+
+## Home Assistant entities
+
+The same entities work with either protocol:
+
+```yaml
 switch:
   - platform: zoneswitch
-    id: zone_1_switch
-    zoneswitch_id: zs_bus
-    zone: 1
-    name: "ZoneSwitch Zone 1"
-    icon: mdi:air-filter
-
-  - platform: zoneswitch
-    id: zone_2_switch
     zoneswitch_id: zs_bus
     zone: 2
-    name: "ZoneSwitch Zone 2"
-    icon: mdi:air-filter
+    name: Zone 2
 
+button:
   - platform: zoneswitch
-    id: zone_3_switch
     zoneswitch_id: zs_bus
-    zone: 3
-    name: "ZoneSwitch Zone 3"
-    icon: mdi:air-filter
-
-  - platform: zoneswitch
-    id: zone_4_switch
-    zoneswitch_id: zs_bus
-    zone: 4
-    name: "ZoneSwitch Zone 4"
-    icon: mdi:air-filter
-
-  - platform: zoneswitch
-    id: zone_5_switch
-    zoneswitch_id: zs_bus
-    zone: 5
-    name: "ZoneSwitch Zone 5"
-    icon: mdi:air-filter
-
-  - platform: zoneswitch
-    id: zone_6_switch
-    zoneswitch_id: zs_bus
-    zone: 6
-    name: "ZoneSwitch Zone 6"
-    icon: mdi:air-filter
+    name: Refresh zone state
 
 sensor:
   - platform: zoneswitch
-    id: zoneswitch_node_address
-    zoneswitch_id: zs_bus
-    metric: node_address
-    name: "ZoneSwitch Node Address"
-    icon: mdi:identifier
-
-  - platform: zoneswitch
-    id: zoneswitch_rx_ok
     zoneswitch_id: zs_bus
     metric: rx_ok
-    name: "ZoneSwitch RX OK"
-    icon: mdi:counter
-
+    name: Valid frames
   - platform: zoneswitch
-    id: zoneswitch_rx_bad
     zoneswitch_id: zs_bus
     metric: rx_bad
-    name: "ZoneSwitch RX Bad"
-    icon: mdi:counter
+    name: Rejected frames
 
 binary_sensor:
   - platform: zoneswitch
-    id: zoneswitch_online_status
     zoneswitch_id: zs_bus
     metric: online
-    name: "ZoneSwitch Gateway Online"
-    icon: mdi:lan-connect
-
-text_sensor:
-  # Hex format (default): publishes "0x48"
-  - platform: zoneswitch
-    id: zoneswitch_node_address_text
-    zoneswitch_id: zs_bus
-    metric: node_address
-    name: "ZoneSwitch Node Address"
-    icon: mdi:identifier
-    # format: hex  # default
-
-  # Decimal format: publishes "72"
-  - platform: zoneswitch
-    id: zoneswitch_node_address_decimal
-    zoneswitch_id: zs_bus
-    metric: node_address
-    format: decimal
-    name: "ZoneSwitch Node Address (decimal)"
-    icon: mdi:identifier
+    name: ZoneSwitch online
 ```
 
-## Project goals
+Zones are 1–6; expose only installed zones. A `binary_sensor` with `zone: 2`
+instead of `metric` provides read-only status. Switches publish received state,
+not optimistic command success. V1 queries before an ON/OFF request, toggles only
+if necessary, and abandons an unconfirmed transaction without automatic retry.
+Commands received while a V1 command is in progress are rejected; issue them
+again after it finishes. V1 has no transaction sequence field, so collision-free
+response attribution on the shared bus remains unproven.
 
-- Decode RS485 packet format between ZoneSwitch touchpad and main control module
-- Extract install/wiring details from vendor documentation and photos
-- Build an ESPHome path to:
-  - publish per-zone status (Z1..Z6)
-  - eventually switch zones on/off
-  - emulate a second touchpad on T2
+V2 additionally supports `sensor`/`text_sensor` with `metric: node_address`.
+V1 has no observed node address; omit these diagnostics (their value stays zero).
 
-## Current status
+## Configuration reference
 
-- Captured idle bus traffic is available and parsed.
-- Draft protocol spec created and updated with validated request/response semantics.
-- Touchpad2 emulation plan created (staged passive -> active approach).
-- External ESPHome component scaffolded (`zoneswitch`) with assignable zone entities.
-- External ESPHome component now supports both per-zone status and per-zone switch control.
-- Commented ESPHome component example created for zone mask decoding and control.
-- RS485/ESPHome best-practices research consolidated and applied.
-- Azure Document Intelligence script added for reusable PDF/image OCR to Markdown.
+| Option | Default | Meaning |
+|---|---|---|
+| `protocol` | `v2` | Explicit `v1` opt-in |
+| `debug` | false | Component protocol logs; logger must permit DEBUG |
+| `enable_polling` | V2 true / V1 false | Periodic state queries |
+| `poll_interval` | 5s, minimum 500ms | Periodic query interval; V1 also enforces a 1s transaction gap |
+| `tx_idle_guard` | 20ms | Receive quiet time required before TX |
+| `flow_control_pin` | unset | Component-owned DE; required for V1, optional legacy V2 path |
+| `status_timeout` | V2 30s / V1 0s | Age before offline; 0 disables age expiry for quiet event-driven buses |
+| `diagnostic_update_interval` | 10s | Batch counter updates; online changes publish immediately |
+| `spill_zone` | 0 | Optional last-open spill-zone guard; 1–6 only when installation is known |
+| `tx_node_addr` | 0x48 | V2 fallback address; 0 requires passive discovery |
+| `node_confirmations` | 3 | V2 matching statuses needed to lock address |
+| `node_mismatch_threshold` | 5 | V2 mismatches before relearning |
+| `restore_node` | false | V2 persisted candidate, revalidated before writes |
+| `offline_miss_threshold` | 5 | V2 missed-response threshold |
 
-## Key files
+With V1's default age timeout disabled, online means a valid status has been
+observed and no subsequent active transaction failed. It is not continuous
+connection monitoring. Failed V1 transactions immediately mark it offline.
+The V2 address/miss-threshold settings do not participate in V1 control.
+Never configure both UART and component direction control.
 
-- Research captures and OCR output:
-  - `docs/research/protocol/saved_rs485_packets.md`
-  - `docs/research/protocol/saved_rs485_packets2.md`
-  - `docs/research/protocol/saved_rs485_packets3.md`
-  - `docs/research/ZoneSwitchV2_OpInstallationManual2015_12x17.md`
-  - `docs/research/screenshot_ocr.md`
-- Reverse-engineering outputs:
-  - `docs/specs/polyaire_zoneswitch_protocol_spec_draft.md`
-  - `docs/specs/esphome_zoneswitch_touchpad2_plan.md`
-  - `docs/backlog.md`
-  - `docs/research/rs485_esphome_best_practices.md`
-- ESPHome starter templates:
-  - `esphome/esphome_zoneswitch_component_example.yaml`
-- External component source:
-  - `esphome/components/zoneswitch/`
-- OCR tooling:
-  - `tools/azure_docint_to_markdown.py`
-  - `tools/README.md`
+## Repository layout and validation
 
-## Protocol notes (snapshot)
+- `esphome/components/zoneswitch/`: shared hub/entities plus `protocol_v1.cpp` and `protocol_v2.cpp`.
+- `esphome/examples/`: version-specific YAML fragments.
+- `docs/protocols/v1/`, `docs/protocols/v2/`: protocol evidence and limitations.
+- `docs/research/v1/`, `docs/research/v2/`: original captures.
+- [Tests](tests/README.md): parser, transaction, schema and ESP32 build checks.
+- [Tools](tools/README.md): V2 checksum analysis and document OCR.
+- [Backlog](docs/backlog.md): remaining protocol work.
 
-From current captures:
-
-- Fixed 9-byte framing with `AA` start and `55` end
-- Request/response pair structure is consistent
-- Sequence byte is mirrored in response
-- Response payload includes a validated 6-bit zone mask
-- Checksum is validated as CRC-8/MAXIM over bytes `[1..6]`
-- Component-generated idle poll frames in `saved_rs485_packets3.md` also match
-  the checksum model. That capture predates the auto-detection PR, so its
-  `Node Address = 0` diagnostic should be retested; with auto-detection enabled,
-  valid discovered traffic should update the learned node address.
-
-See the draft spec for exact byte-level detail and confidence labels.
-
-The `esphome/esphome_zoneswitch_component_example.yaml` file includes a larger
-commented configuration with all zones and diagnostics.
-
-## ESPHome external component usage
-
-Use the new component to assign one or more zones and publish/control them as entities:
-
-```yaml
-external_components:
-  - source:
-      type: git
-      url: https://github.com/jourdant/esphome-zoneswitch
-      ref: main
-    components: [ "zoneswitch" ]
-
-uart:
-  - id: zoneswitch_uart
-    rx_pin: GPIO03
-    tx_pin: GPIO04
-    baud_rate: 9600
-    # Optional but recommended for ESP32 RS485 hardware when DE/RE is wired.
-    flow_control_pin: GPIO05
-
-zoneswitch:
-  - id: zs_bus
-    # Required: UART bus connected to the ZoneSwitch RS485 lines.
-    uart_id: zoneswitch_uart
-    # Optional: interval between active polls/writes. Lower values react faster
-    # but add more traffic to the bus.
-    poll_interval: 5s
-    # Optional: require the bus RX side to be quiet for this long before TX.
-    # Helps reduce collisions on a shared half-duplex RS485 bus.
-    tx_idle_guard: 20ms
-    # Optional: number of matching status frames required before locking the
-    # autodetected node address and enabling control writes.
-    node_confirmations: 3
-    # Optional: consecutive locked-node mismatches before dropping the learned
-    # address and restarting autodetection.
-    node_mismatch_threshold: 5
-    # Optional: fallback node to use before autodetection locks a node. Set to 0
-    # for passive-only learning unless restore_node provides a candidate.
-    tx_node_addr: 0x48
-    # Optional: persist the last confirmed node and restore it on boot as an
-    # untrusted fallback candidate. Fresh confirmations are still required
-    # before zone writes are enabled.
-    restore_node: false
-    # Optional: component-managed DE/RE control pin. Usually leave unset if you
-    # use uart.flow_control_pin above.
-    # flow_control_pin: GPIO05
-    # Optional: missed active responses before marking the gateway offline.
-    offline_miss_threshold: 5
-    # Optional: offline timeout for both active and passive operation.
-    status_timeout: 30s
-    # Optional: minimum interval between RX counter publications.
-    diagnostic_update_interval: 10s
-    # Optional: set to 1..6 if your controller has a known spill zone.
-    # Set to 0 to disable spill-zone guarding.
-    spill_zone: 0
-
-switch:
-  - platform: zoneswitch
-    id: zone_1_switch
-    zoneswitch_id: zs_bus
-    zone: 1
-    name: "Zone 1"
-    icon: mdi:air-filter
-
-  - platform: zoneswitch
-    id: zone_2_switch
-    zoneswitch_id: zs_bus
-    zone: 2
-    name: "Zone 2"
-    icon: mdi:air-filter
-
-text_sensor:
-  # Hex format (default): publishes "0x48"
-  - platform: zoneswitch
-    id: zoneswitch_node_address_text
-    zoneswitch_id: zs_bus
-    metric: node_address
-    name: "ZoneSwitch Node Address"
-    icon: mdi:identifier
-    # format: hex  # default
-
-  # Decimal format: publishes "72"
-  - platform: zoneswitch
-    id: zoneswitch_node_address_decimal
-    zoneswitch_id: zs_bus
-    metric: node_address
-    format: decimal
-    name: "ZoneSwitch Node Address (decimal)"
-    icon: mdi:identifier
-```
-
-For a complete example with all 6 zones, see
-`esphome/esphome_zoneswitch_component_example.yaml`.
-
-Open follow-up work is tracked in `docs/backlog.md`.
-
-The component validates CRC-8/MAXIM on received frames, learns the session-scoped
-node address from valid status responses, exposes optional RX diagnostic counters
-(`metric: rx_ok` and `metric: rx_bad`), and suppresses repeated toggle writes
-until a fresh status frame confirms current hardware state.
-
-Node learning is deliberately conservative: the first discovered node is exposed
-for diagnostics, but the component does not treat it as locked until it has seen
-`node_confirmations` matching status frames. Zone switch commands are ignored
-until a valid locked status frame initializes the live mask, so a Home Assistant
-command cannot be based on a stale or assumed all-off mask.
-
-After a node is locked, the component counts consecutive status frames that look
-valid but no longer match the locked node/`ARG0` pair. If that count reaches
-`node_mismatch_threshold`, it marks the node stale, drops online state, clears any
-pending write intent, and restarts autodetection. This lets the component recover
-from a controller/session change without letting one stray frame immediately
-reset the learned node.
-
-Before transmitting, the component requires the UART RX side to have been idle
-for `tx_idle_guard` and then holds RS485 driver-enable asserted for a conservative
-post-`flush()` margin. ESPHome documents `flow_control_pin` as ESP32 RS485
-half-duplex support and documents `flush_timeout` for waiting on TX FIFO drain;
-there does not appear to be a public ESPHome custom-component TX-complete callback
-to use here, so the implemented guard is a conservative timing margin around
-`flush()`.
-
-`tx_node_addr` is only a pre-learn fallback hint. Set it to `0` only for passive
-learning from existing touchpad traffic, because transmissions are skipped until
-a valid response teaches the runtime node address. With `enable_polling: false`,
-periodic polls stay disabled but switch commands can still be sent after passive
-traffic has established a valid live state.
-
-For faster startup, there are three possible strategies:
-
-- Configure a known fallback with `tx_node_addr` when a site has repeatedly shown
-  a stable session node. This is fastest, but least conservative.
-- Use `tx_node_addr: 0` and rely on passive autodetection. This is safest, but it
-  waits for existing bus traffic before active polling can start.
-- Enable `restore_node` to persist the last autodetected node and restore it on
-  boot as an untrusted fallback candidate. This may save one discovery cycle, but
-  it still requires fresh confirmations before writes because the packet captures
-  show node addresses can change between sessions.
-
-A low-impact version of the persistence idea would be to restore the last node as
-an untrusted fallback candidate, continue passively validating every status frame,
-and only keep using it while periodic confirmations still match. For example, the
-component could reaffirm every 100th status frame or use a time-based interval.
-That should be cheap in the ESPHome loop because it is just a counter check on
-frames the parser is already processing. It still needs careful invalidation:
-missed responses, sequence mismatch patterns, or a different confirmed node
-should clear the restored candidate and fall back to normal autodetection.
-
-`restore_node` and `node_mismatch_threshold` now provide the basic persistence
-and runtime invalidation path. The restored value is never treated as locked
-until live traffic confirms it again.
-
-See `docs/backlog.md` for the persistence and protocol-variant cleanup tasks.
-
-## Next recommended capture set
-
-To harden write behavior and edge-case handling further, collect button-action captures:
-
-- Active ESPHome TX with the auto-detection PR applied, confirming the learned
-  node address updates and controller status responses are decoded
-- Press each zone once (then again)
-- Long-press spill-zone setting action
-- Touchpad-off combo (Z3 + Z4)
-- Capture with spill DIP OFF and ON
-
-These traces should harden active autodetection, coexistence, spill-mode, and
-touchpad-combo behavior. Command opcode and checksum are already decoded.
+The original `esphome/esphome_zoneswitch_component_example.yaml` path remains as
+a package include of the V2 example for compatibility.
