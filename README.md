@@ -4,6 +4,13 @@ Connect a Polyaire ZoneSwitch controller to Home Assistant through RS485.
 **V2 is the default and is confirmed fully working on V2.1 hardware.**
 V1 supports software control on V1.0-T hardware, with a known wall-panel limitation.
 
+<p align="center">
+  <img src="docs/assets/ha-dashboard.jpg" width="600" alt="Home Assistant dashboard showing four highlighted ZoneSwitch controls: Master Bedroom, Guest Bedroom, Other Bedrooms and Media Room; Media Room is on">
+</p>
+
+*Example Home Assistant dashboard. The four tiles highlighted in red are the
+ZoneSwitch zone controls, with room names configured for this installation.*
+
 ## Identify your wall controller
 
 Read the revision printed on the **back of the wall PCB**. These are the two
