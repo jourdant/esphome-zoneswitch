@@ -7,8 +7,10 @@ namespace esphome {
 namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch";
-static constexpr uint32_t NODE_PREF_KEY = 0x5A510001UL;
 static constexpr uint8_t NODE_PREF_MAGIC = 0xA5;
+static constexpr uint8_t MAX_RX_BYTES_PER_LOOP = 32;
+static constexpr uint32_t RX_FRAME_TIMEOUT_MS = 20;
+static constexpr uint32_t TX_RETRY_INTERVAL_MS = 10;
 
 float ZoneSwitch::get_setup_priority() const { return setup_priority::DATA; }
 
@@ -17,7 +19,7 @@ void ZoneSwitch::setup() {
     return;
   }
 
-  this->node_pref_ = global_preferences->make_preference<NodePreference>(NODE_PREF_KEY, true);
+  this->node_pref_ = global_preferences->make_preference<NodePreference>(this->preference_key_, true);
   NodePreference restored{};
   if (!this->node_pref_.load(&restored) || restored.magic != NODE_PREF_MAGIC || restored.node == 0x00) {
     if (this->debug_) {
@@ -42,8 +44,8 @@ void ZoneSwitch::setup() {
 void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "ZoneSwitch:");
   check_uart_settings(9600);
-  ESP_LOGCONFIG(TAG, "  Zones configured: %d", (int) this->zones_.size());
-  ESP_LOGCONFIG(TAG, "  Switches configured: %d", (int) this->switches_.size());
+  ESP_LOGCONFIG(TAG, "  Zones configured: %u", this->zone_count_);
+  ESP_LOGCONFIG(TAG, "  Switches configured: %u", this->switch_count_);
   ESP_LOGCONFIG(TAG, "  Poll interval: %ums", this->poll_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Polling enabled: %s", YESNO(this->enable_polling_));
   ESP_LOGCONFIG(TAG, "  TX fallback node: 0x%02X", this->tx_node_addr_);
@@ -55,6 +57,8 @@ void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "  Node confirmations required: %u", this->node_confirmations_required_);
   ESP_LOGCONFIG(TAG, "  Node mismatch threshold: %u", this->node_mismatch_threshold_);
   ESP_LOGCONFIG(TAG, "  Offline miss threshold: %u", this->offline_miss_threshold_);
+  ESP_LOGCONFIG(TAG, "  Status timeout: %ums", this->status_timeout_ms_);
+  ESP_LOGCONFIG(TAG, "  Diagnostic update interval: %ums", this->diagnostic_update_interval_ms_);
   ESP_LOGCONFIG(TAG, "  Spill zone guard: %u", this->spill_zone_);
   ESP_LOGCONFIG(TAG, "  Last node address: 0x%02X", this->node_addr_);
   ESP_LOGCONFIG(TAG, "  Last mask: 0x%02X", this->last_mask_);
@@ -67,16 +71,27 @@ void ZoneSwitch::dump_config() {
   }
   if (this->flow_control_pin_ != nullptr) {
     ESP_LOGCONFIG(TAG, "  Flow control pin set");
-  } else if (this->enable_polling_ || !this->switches_.empty()) {
+  } else if (this->enable_polling_ || this->switch_count_ != 0) {
     ESP_LOGCONFIG(TAG, "  Component flow control pin not set; relying on UART/transceiver configuration");
   }
 }
 
-void ZoneSwitch::register_zone(ZoneSwitchMaskListener *zone) { this->zones_.push_back(zone); }
+void ZoneSwitch::register_zone(ZoneSwitchMaskListener *zone) {
+  zone->next_mask_listener_ = this->mask_listeners_;
+  this->mask_listeners_ = zone;
+  this->zone_count_++;
+}
 
-void ZoneSwitch::register_switch(ZoneSwitchMaskListener *zone_switch) { this->switches_.push_back(zone_switch); }
+void ZoneSwitch::register_switch(ZoneSwitchMaskListener *zone_switch) {
+  zone_switch->next_mask_listener_ = this->mask_listeners_;
+  this->mask_listeners_ = zone_switch;
+  this->switch_count_++;
+}
 
-void ZoneSwitch::register_diagnostic(ZoneSwitchDiagnosticListener *diagnostic) { this->diagnostics_.push_back(diagnostic); }
+void ZoneSwitch::register_diagnostic(ZoneSwitchDiagnosticListener *diagnostic) {
+  diagnostic->next_diagnostic_listener_ = this->diagnostic_listeners_;
+  this->diagnostic_listeners_ = diagnostic;
+}
 
 void ZoneSwitch::request_zone_state(uint8_t zone, bool target_on) {
   if (zone < 1 || zone > 6) {
@@ -124,19 +139,32 @@ uint8_t ZoneSwitch::crc8_maxim_(const uint8_t *data, size_t len) {
 }
 
 void ZoneSwitch::publish_mask_(uint8_t mask) {
-  for (auto *zone : this->zones_) {
-    zone->on_mask_update(mask);
-  }
-
-  for (auto *zone_switch : this->switches_) {
-    zone_switch->on_mask_update(mask);
+  for (auto *listener = this->mask_listeners_; listener != nullptr; listener = listener->next_mask_listener_) {
+    listener->on_mask_update(mask);
   }
 }
 
-void ZoneSwitch::publish_diagnostics_() {
-  for (auto *diagnostic : this->diagnostics_) {
-    diagnostic->on_diagnostics_update(this->node_addr_, this->online_, this->rx_ok_count_, this->rx_bad_count_);
+void ZoneSwitch::publish_diagnostics_(bool force) {
+  const uint32_t now = millis();
+  this->diagnostics_dirty_ = true;
+  if (!force && (now - this->last_diagnostic_publish_ms_) < this->diagnostic_update_interval_ms_) {
+    return;
   }
+
+  this->last_diagnostic_publish_ms_ = now;
+  this->diagnostics_dirty_ = false;
+  for (auto *listener = this->diagnostic_listeners_; listener != nullptr;
+       listener = listener->next_diagnostic_listener_) {
+    listener->on_diagnostics_update(this->node_addr_, this->online_, this->rx_ok_count_, this->rx_bad_count_);
+  }
+}
+
+bool ZoneSwitch::deadline_reached_(uint32_t now, uint32_t deadline) {
+  return static_cast<int32_t>(now - deadline) >= 0;
+}
+
+bool ZoneSwitch::tx_retry_due_(uint32_t now) const {
+  return this->next_tx_retry_ms_ == 0 || deadline_reached_(now, this->next_tx_retry_ms_);
 }
 
 uint8_t ZoneSwitch::get_tx_node_() const {
@@ -245,6 +273,8 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
 
   this->waiting_for_response_ = true;
   this->waiting_for_write_response_ = arg1 != 0x00;
+  this->last_tx_ms_ = millis();
+  this->next_tx_retry_ms_ = 0;
   return true;
 }
 
@@ -265,46 +295,12 @@ uint8_t ZoneSwitch::apply_spill_guard_(uint8_t diff) const {
 }
 
 void ZoneSwitch::run_poll_cycle_() {
-  if (!this->enable_polling_) {
-    return;
-  }
-
   const uint32_t now = millis();
-  if ((now - this->last_poll_ms_) < this->poll_interval_ms_) {
-    return;
-  }
-  this->last_poll_ms_ = now;
+  this->service_status_timeout_(now);
+  this->service_response_timeout_(now);
 
-  if (this->waiting_for_response_) {
-    const bool missed_write = this->waiting_for_write_response_;
-    this->waiting_for_response_ = false;
-    this->waiting_for_write_response_ = false;
-
-    if (this->consecutive_misses_ < 0xFF) {
-      this->consecutive_misses_++;
-    }
-
-    if (this->consecutive_misses_ >= this->offline_miss_threshold_ && this->online_) {
-      this->online_ = false;
-      if (this->debug_) {
-        ESP_LOGW(TAG, "Marked offline after %u missed responses", this->consecutive_misses_);
-      }
-      this->publish_diagnostics_();
-    }
-
-    if (this->pending_desired_) {
-      this->require_fresh_status_before_write_ = true;
-    }
-
-    if (missed_write) {
-      if (this->debug_) {
-        ESP_LOGW(TAG, "Write response missed; waiting for fresh status before another toggle");
-      }
-      return;
-    }
-  }
-
-  if (this->pending_desired_ && this->has_status_ && this->online_ && !this->require_fresh_status_before_write_) {
+  if (!this->waiting_for_response_ && this->pending_desired_ && this->has_status_ && this->online_ &&
+      !this->require_fresh_status_before_write_ && this->tx_retry_due_(now)) {
     const uint8_t diff = this->apply_spill_guard_((uint8_t) ((this->desired_mask_ ^ this->last_mask_) & 0x3F));
     if (diff != 0) {
       uint8_t toggle_bit = 0;
@@ -317,7 +313,9 @@ void ZoneSwitch::run_poll_cycle_() {
       }
 
       if (toggle_bit != 0) {
-        this->send_request_(toggle_bit);
+        if (!this->send_request_(toggle_bit)) {
+          this->next_tx_retry_ms_ = now + TX_RETRY_INTERVAL_MS;
+        }
         return;
       }
     }
@@ -325,7 +323,58 @@ void ZoneSwitch::run_poll_cycle_() {
     this->pending_desired_ = false;
   }
 
-  this->send_request_(0x00);
+  if (!this->enable_polling_ || this->waiting_for_response_ ||
+      (now - this->last_poll_ms_) < this->poll_interval_ms_ || !this->tx_retry_due_(now)) {
+    return;
+  }
+
+  if (this->send_request_(0x00)) {
+    this->last_poll_ms_ = now;
+  } else {
+    this->next_tx_retry_ms_ = now + TX_RETRY_INTERVAL_MS;
+  }
+}
+
+void ZoneSwitch::service_status_timeout_(uint32_t now) {
+  if (!this->online_ || this->last_status_ms_ == 0 || (now - this->last_status_ms_) < this->status_timeout_ms_) {
+    return;
+  }
+
+  this->online_ = false;
+  this->waiting_for_response_ = false;
+  this->waiting_for_write_response_ = false;
+  this->require_fresh_status_before_write_ = this->pending_desired_;
+  if (this->debug_) {
+    ESP_LOGW(TAG, "Marked offline after %ums without a valid status", this->status_timeout_ms_);
+  }
+  this->publish_diagnostics_(true);
+}
+
+void ZoneSwitch::service_response_timeout_(uint32_t now) {
+  if (!this->waiting_for_response_ || (now - this->last_tx_ms_) < this->poll_interval_ms_) {
+    return;
+  }
+
+  const bool missed_write = this->waiting_for_write_response_;
+  this->waiting_for_response_ = false;
+  this->waiting_for_write_response_ = false;
+
+  if (this->consecutive_misses_ < 0xFF) {
+    this->consecutive_misses_++;
+  }
+  if (this->consecutive_misses_ >= this->offline_miss_threshold_ && this->online_) {
+    this->online_ = false;
+    if (this->debug_) {
+      ESP_LOGW(TAG, "Marked offline after %u missed responses", this->consecutive_misses_);
+    }
+    this->publish_diagnostics_(true);
+  }
+  if (this->pending_desired_) {
+    this->require_fresh_status_before_write_ = true;
+  }
+  if (missed_write && this->debug_) {
+    ESP_LOGW(TAG, "Write response missed; waiting for fresh status before another toggle");
+  }
 }
 
 bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
@@ -367,6 +416,7 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
     }
 
     if (!this->node_locked_) {
+      const uint8_t previous_candidate_node = this->candidate_node_addr_;
       if (frame[1] == this->candidate_node_addr_ && arg0 == this->candidate_arg0_) {
         if (this->candidate_confirmations_ < 0xFF) {
           this->candidate_confirmations_++;
@@ -385,7 +435,7 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
       }
 
       if (this->candidate_confirmations_ < this->node_confirmations_required_) {
-        this->publish_diagnostics_();
+        this->publish_diagnostics_(this->candidate_node_addr_ != previous_candidate_node);
         return true;
       }
 
@@ -426,7 +476,7 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
         this->require_fresh_status_before_write_ = true;
       }
 
-      this->publish_diagnostics_();
+      this->publish_diagnostics_(!this->node_locked_);
       return true;
     }
 
@@ -436,7 +486,8 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
     const uint8_t previous_mask = this->last_mask_;
     const bool previous_has_status = this->has_status_;
 
-    if (this->waiting_for_response_ && this->has_last_tx_seq_ && frame[3] != this->last_tx_seq_ && this->debug_) {
+    const bool sequence_matches = this->has_last_tx_seq_ && frame[3] == this->last_tx_seq_;
+    if (this->waiting_for_response_ && !sequence_matches && this->debug_) {
       ESP_LOGW(TAG, "Response sequence mismatch. got=0x%02X expected=0x%02X", frame[3], this->last_tx_seq_);
     }
 
@@ -447,10 +498,14 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
       this->desired_mask_ = this->last_mask_;
     }
     this->has_status_ = true;
-    this->waiting_for_response_ = false;
-    this->waiting_for_write_response_ = false;
-    this->require_fresh_status_before_write_ = false;
+    this->last_status_ms_ = millis();
+    if (!this->waiting_for_write_response_ || sequence_matches) {
+      this->waiting_for_response_ = false;
+      this->waiting_for_write_response_ = false;
+      this->require_fresh_status_before_write_ = false;
+    }
     this->consecutive_misses_ = 0;
+    const bool became_online = !this->online_;
     this->online_ = true;
 
     if (this->debug_) {
@@ -461,7 +516,7 @@ bool ZoneSwitch::handle_frame_(const uint8_t *frame) {
       this->publish_mask_(this->last_mask_);
     }
 
-    this->publish_diagnostics_();
+    this->publish_diagnostics_(became_online);
   } else {
     this->publish_diagnostics_();
   }
@@ -476,7 +531,7 @@ void ZoneSwitch::service_flow_control_() {
     this->tx_de_assert_pending_ = false;
     return;
   }
-  if (millis() >= this->tx_de_assert_at_ms_) {
+  if (deadline_reached_(millis(), this->tx_de_assert_at_ms_)) {
     this->flow_control_pin_->digital_write(false);
     this->tx_de_assert_pending_ = false;
   }
@@ -486,11 +541,24 @@ void ZoneSwitch::loop() {
   this->service_flow_control_();
   this->run_poll_cycle_();
 
-  while (this->available()) {
+  const uint32_t now = millis();
+  if (this->diagnostics_dirty_ &&
+      (now - this->last_diagnostic_publish_ms_) >= this->diagnostic_update_interval_ms_) {
+    this->publish_diagnostics_(true);
+  }
+  if (this->rx_index_ != 0 && (now - this->last_rx_byte_ms_) >= RX_FRAME_TIMEOUT_MS) {
+    this->rx_index_ = 0;
+    this->rx_bad_count_++;
+    this->publish_diagnostics_();
+  }
+
+  uint8_t processed = 0;
+  while (processed < MAX_RX_BYTES_PER_LOOP && this->available()) {
     uint8_t byte;
     if (!this->read_byte(&byte)) {
       break;
     }
+    processed++;
     this->last_rx_byte_ms_ = millis();
 
     if (this->rx_index_ == 0 && byte != 0xAA) {

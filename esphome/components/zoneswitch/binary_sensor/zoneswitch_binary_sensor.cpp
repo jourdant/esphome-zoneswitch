@@ -7,7 +7,11 @@ namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch.binary_sensor";
 
-void ZoneSwitchBinarySensor::setup() { this->publish_if_changed_(false); }
+void ZoneSwitchBinarySensor::setup() {
+  if (this->type_ == BINARY_SENSOR_METRIC_ONLINE) {
+    this->publish_if_changed_(false);
+  }
+}
 
 void ZoneSwitchBinarySensor::publish_if_changed_(bool state) {
   if (this->has_published_state_ && this->last_published_state_ == state)

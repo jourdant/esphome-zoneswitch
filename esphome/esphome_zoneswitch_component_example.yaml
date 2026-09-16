@@ -47,6 +47,12 @@ zoneswitch:
     restore_node: false
     # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
+    # Optional: mark the gateway offline if no valid status frame is received,
+    # including when active polling is disabled.
+    status_timeout: 30s
+    # Optional: minimum interval for publishing RX counter changes. Node and
+    # online state changes are still published immediately.
+    diagnostic_update_interval: 10s
     # Optional: set to 1..6 if the controller has a known hardware spill zone.
     # Set to 0 to disable spill-zone guarding.
     spill_zone: 0

@@ -15,8 +15,6 @@ class ZoneSwitchSwitch : public switch_::Switch, public Component, public ZoneSw
   void set_zone(uint8_t zone) { this->zone_ = zone; }
   void on_mask_update(uint8_t mask) override;
   void dump_config() override;
-  void setup() override;
-
  protected:
   void write_state(bool state) override;
   void publish_if_changed_(bool state);

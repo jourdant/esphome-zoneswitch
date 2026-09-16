@@ -78,30 +78,12 @@ standard fixtures as derived test data.
 - Add CI to run the checksum solver against bundled captures.
 - Use the tests to protect future protocol refactors and capture-file moves.
 
-### Add passive-mode offline timeout
-
-Offline detection currently depends mainly on active polling response misses. In
-passive-only mode, a gateway can receive one valid status frame, become online,
-and then remain online even if the bus goes quiet.
-
-Add a `status_timeout` or similar option that tracks `last_status_ms_` and marks
-the component offline when no valid status frame has been seen for a configured
-period. This should be independent of active polling.
-
 ### Enhance and validate active response sequence policy
 
-Sequence mismatches are currently logged, but valid status frames are still
-accepted for state refresh. Keep this behavior for now, but validate it on a bus
-with a physical touchpad and ESPHome both present.
-
-Possible enhancement:
-
-- passive mode: accept any checksum-valid status frame for state refresh
-- active poll waiting: use mismatched sequence as a warning, but allow state refresh
-- active write waiting: require the expected sequence before clearing write wait
-  state, so unrelated traffic cannot confirm a write
-
-Capture evidence is needed before tightening this further.
+Sequence mismatches are logged and valid status frames still refresh passive
+state. A pending write is only acknowledged by its matching sequence, preventing
+unrelated touchpad traffic from confirming a toggle. Validate this policy on a
+bus with a physical touchpad and ESPHome both present.
 
 ### Expose more diagnostics
 

@@ -7,8 +7,6 @@ namespace zoneswitch {
 
 static const char *const TAG = "zoneswitch.switch";
 
-void ZoneSwitchSwitch::setup() { this->publish_if_changed_(false); }
-
 void ZoneSwitchSwitch::publish_if_changed_(bool state) {
   if (this->has_published_state_ && this->last_published_state_ == state)
     return;

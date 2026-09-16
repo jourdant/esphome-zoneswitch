@@ -1,3 +1,5 @@
+import zlib
+
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome import pins
@@ -24,6 +26,8 @@ CONF_TX_IDLE_GUARD = "tx_idle_guard"
 CONF_NODE_CONFIRMATIONS = "node_confirmations"
 CONF_NODE_MISMATCH_THRESHOLD = "node_mismatch_threshold"
 CONF_RESTORE_NODE = "restore_node"
+CONF_STATUS_TIMEOUT = "status_timeout"
+CONF_DIAGNOSTIC_UPDATE_INTERVAL = "diagnostic_update_interval"
 
 
 def _validate_poll_interval(value):
@@ -33,6 +37,16 @@ def _validate_poll_interval(value):
         total_milliseconds = total_milliseconds()
     if total_milliseconds < 500:
         raise cv.Invalid("poll_interval must be at least 500ms")
+    return value
+
+
+def _validate_bounded_milliseconds(value):
+    value = cv.positive_time_period_milliseconds(value)
+    total_milliseconds = value.total_milliseconds
+    if callable(total_milliseconds):
+        total_milliseconds = total_milliseconds()
+    if total_milliseconds >= 0x80000000:
+        raise cv.Invalid("duration must be less than 24.8 days")
     return value
 
 CONFIG_SCHEMA = (
@@ -50,6 +64,8 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_NODE_CONFIRMATIONS, default=3): cv.int_range(min=1, max=10),
             cv.Optional(CONF_NODE_MISMATCH_THRESHOLD, default=5): cv.int_range(min=1, max=255),
             cv.Optional(CONF_RESTORE_NODE, default=False): cv.boolean,
+            cv.Optional(CONF_STATUS_TIMEOUT, default="30s"): _validate_bounded_milliseconds,
+            cv.Optional(CONF_DIAGNOSTIC_UPDATE_INTERVAL, default="10s"): _validate_bounded_milliseconds,
         }
     ).extend(cv.COMPONENT_SCHEMA)
 )
@@ -74,3 +90,7 @@ async def to_code(config):
     cg.add(var.set_node_confirmations(config[CONF_NODE_CONFIRMATIONS]))
     cg.add(var.set_node_mismatch_threshold(config[CONF_NODE_MISMATCH_THRESHOLD]))
     cg.add(var.set_restore_node(config[CONF_RESTORE_NODE]))
+    preference_key = zlib.crc32(f"zoneswitch:{config[CONF_ID].id}".encode())
+    cg.add(var.set_preference_key(preference_key))
+    cg.add(var.set_status_timeout(config[CONF_STATUS_TIMEOUT]))
+    cg.add(var.set_diagnostic_update_interval(config[CONF_DIAGNOSTIC_UPDATE_INTERVAL]))

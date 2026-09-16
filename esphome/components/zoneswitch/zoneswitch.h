@@ -4,7 +4,6 @@
 #include "esphome/core/component.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/preferences.h"
-#include <vector>
 
 namespace esphome {
 namespace zoneswitch {
@@ -13,12 +12,20 @@ class ZoneSwitchMaskListener {
  public:
   virtual void on_mask_update(uint8_t mask) = 0;
   virtual ~ZoneSwitchMaskListener() = default;
+
+ protected:
+  friend class ZoneSwitch;
+  ZoneSwitchMaskListener *next_mask_listener_{nullptr};
 };
 
 class ZoneSwitchDiagnosticListener {
  public:
   virtual void on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count, uint32_t rx_bad_count) = 0;
   virtual ~ZoneSwitchDiagnosticListener() = default;
+
+ protected:
+  friend class ZoneSwitch;
+  ZoneSwitchDiagnosticListener *next_diagnostic_listener_{nullptr};
 };
 
 class ZoneSwitch : public uart::UARTDevice, public Component {
@@ -44,6 +51,9 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   void set_node_confirmations(uint8_t confirmations) { this->node_confirmations_required_ = confirmations; }
   void set_node_mismatch_threshold(uint8_t threshold) { this->node_mismatch_threshold_ = threshold; }
   void set_restore_node(bool restore_node) { this->restore_node_ = restore_node; }
+  void set_preference_key(uint32_t preference_key) { this->preference_key_ = preference_key; }
+  void set_status_timeout(uint32_t timeout_ms) { this->status_timeout_ms_ = timeout_ms; }
+  void set_diagnostic_update_interval(uint32_t interval_ms) { this->diagnostic_update_interval_ms_ = interval_ms; }
 
   uint8_t get_last_mask() const { return this->last_mask_; }
   uint8_t get_node_addr() const { return this->node_addr_; }
@@ -53,9 +63,13 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   static uint8_t crc8_maxim_(const uint8_t *data, size_t len);
   bool handle_frame_(const uint8_t *frame);
   void publish_mask_(uint8_t mask);
-  void publish_diagnostics_();
+  void publish_diagnostics_(bool force = false);
   void run_poll_cycle_();
   void service_flow_control_();
+  void service_status_timeout_(uint32_t now);
+  void service_response_timeout_(uint32_t now);
+  bool tx_retry_due_(uint32_t now) const;
+  static bool deadline_reached_(uint32_t now, uint32_t deadline);
   bool send_request_(uint8_t arg1);
   uint8_t get_tx_node_() const;
   uint8_t apply_spill_guard_(uint8_t diff) const;
@@ -112,20 +126,29 @@ class ZoneSwitch : public uart::UARTDevice, public Component {
   uint32_t poll_interval_ms_{5000};
   uint32_t last_poll_ms_{0};
   uint32_t last_rx_byte_ms_{0};
+  uint32_t last_status_ms_{0};
+  uint32_t last_tx_ms_{0};
+  uint32_t next_tx_retry_ms_{0};
+  uint32_t last_diagnostic_publish_ms_{0};
   uint32_t tx_idle_guard_ms_{20};
   uint32_t tx_de_assert_delay_ms_{20};
   uint32_t tx_de_assert_at_ms_{0};
+  uint32_t status_timeout_ms_{30000};
+  uint32_t diagnostic_update_interval_ms_{10000};
+  uint32_t preference_key_{0x5A510001UL};
 
   bool tx_de_assert_pending_{false};
+  bool diagnostics_dirty_{false};
 
   uint32_t rx_ok_count_{0};
   uint32_t rx_bad_count_{0};
 
   ESPPreferenceObject node_pref_{};
 
-  std::vector<ZoneSwitchMaskListener *> zones_;
-  std::vector<ZoneSwitchMaskListener *> switches_;
-  std::vector<ZoneSwitchDiagnosticListener *> diagnostics_;
+  ZoneSwitchMaskListener *mask_listeners_{nullptr};
+  ZoneSwitchDiagnosticListener *diagnostic_listeners_{nullptr};
+  uint8_t zone_count_{0};
+  uint8_t switch_count_{0};
 };
 
 }  // namespace zoneswitch

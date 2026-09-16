@@ -94,6 +94,12 @@ zoneswitch:
     # flow_control_pin: GPIO21
     # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
+    # Optional: mark the gateway offline after this long without valid status,
+    # including when enable_polling is false.
+    status_timeout: 30s
+    # Optional: batch RX diagnostic counter publications to reduce API traffic.
+    # Node and online changes are still published immediately.
+    diagnostic_update_interval: 10s
     # Optional: set to 1..6 if the controller has a known hardware spill zone.
     # Set to 0 to disable spill-zone guarding.
     spill_zone: 0
@@ -299,6 +305,10 @@ zoneswitch:
     # flow_control_pin: GPIO05
     # Optional: missed active responses before marking the gateway offline.
     offline_miss_threshold: 5
+    # Optional: offline timeout for both active and passive operation.
+    status_timeout: 30s
+    # Optional: minimum interval between RX counter publications.
+    diagnostic_update_interval: 10s
     # Optional: set to 1..6 if your controller has a known spill zone.
     # Set to 0 to disable spill-zone guarding.
     spill_zone: 0
@@ -370,8 +380,10 @@ to use here, so the implemented guard is a conservative timing margin around
 `flush()`.
 
 `tx_node_addr` is only a pre-learn fallback hint. Set it to `0` only for passive
-learning from existing touchpad traffic, because active polls are skipped until a
-valid response teaches the runtime node address.
+learning from existing touchpad traffic, because transmissions are skipped until
+a valid response teaches the runtime node address. With `enable_polling: false`,
+periodic polls stay disabled but switch commands can still be sent after passive
+traffic has established a valid live state.
 
 For faster startup, there are three possible strategies:
 
