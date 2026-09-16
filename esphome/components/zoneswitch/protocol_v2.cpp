@@ -1,13 +1,233 @@
-#include "esphome/core/log.h"
-#include "zoneswitch.h"
+#include "protocol_v2.h"
 
+#include <cstring>
+
+#include "esphome/core/log.h"
 namespace esphome {
 namespace zoneswitch {
-
 static const char* const TAG = "zoneswitch.v2";
 static constexpr uint8_t NODE_PREF_MAGIC = 0xA5;
+static constexpr uint8_t MAX_RX_BYTES_PER_LOOP = 32;
+static constexpr uint32_t RX_FRAME_TIMEOUT_MS = 20;
+static constexpr uint32_t TX_RETRY_INTERVAL_MS = 10;
+void V2ZoneSwitch::setup() {
+  ZoneSwitch::setup();
+  if (!this->restore_node_) {
+    return;
+  }
 
-uint8_t ZoneSwitch::crc8_maxim_(const uint8_t* data, size_t len) {
+  this->node_pref_ = global_preferences->make_preference<NodePreference>(this->preference_key_, true);
+  NodePreference restored{};
+  if (!this->node_pref_.load(&restored) || restored.magic != NODE_PREF_MAGIC || restored.node == 0x00) {
+    if (this->debug_) {
+      ESP_LOGD(TAG, "No restored node candidate available");
+    }
+    return;
+  }
+
+  this->restored_node_addr_ = restored.node;
+  this->restored_arg0_ = restored.arg0;
+  this->restored_node_valid_ = true;
+  this->candidate_node_addr_ = restored.node;
+  this->candidate_arg0_ = restored.arg0;
+  this->candidate_confirmations_ = 0;
+  this->node_addr_ = restored.node;
+
+  if (this->debug_) {
+    ESP_LOGD(TAG, "Restored node candidate: node=0x%02X arg0=0x%02X", restored.node, restored.arg0);
+  }
+}
+
+void V2ZoneSwitch::dump_config() {
+  ZoneSwitch::dump_config();
+  ESP_LOGCONFIG(TAG, "  Protocol: V2");
+  ESP_LOGCONFIG(TAG, "  TX fallback node: 0x%02X", this->tx_node_addr_);
+  ESP_LOGCONFIG(TAG, "  Restore learned node: %s", YESNO(this->restore_node_));
+  if (this->restored_node_valid_) {
+    ESP_LOGCONFIG(TAG, "  Restored node candidate: 0x%02X", this->restored_node_addr_);
+  }
+  ESP_LOGCONFIG(TAG, "  TX idle guard: %ums", static_cast<unsigned>(this->tx_idle_guard_ms_));
+  ESP_LOGCONFIG(TAG, "  Node confirmations required: %u", this->node_confirmations_required_);
+  ESP_LOGCONFIG(TAG, "  Node mismatch threshold: %u", this->node_mismatch_threshold_);
+  ESP_LOGCONFIG(TAG, "  Offline miss threshold: %u", this->offline_miss_threshold_);
+  ESP_LOGCONFIG(TAG, "  Status timeout: %ums", static_cast<unsigned>(this->status_timeout_ms_));
+  ESP_LOGCONFIG(TAG, "  Diagnostic update interval: %ums", static_cast<unsigned>(this->diagnostic_update_interval_ms_));
+  ESP_LOGCONFIG(TAG, "  Spill zone guard: %u", this->spill_zone_);
+  ESP_LOGCONFIG(TAG, "  Last node address: 0x%02X", this->node_addr_);
+  ESP_LOGCONFIG(TAG, "  Last mask: 0x%02X", this->last_mask_);
+  ESP_LOGCONFIG(TAG, "  RX ok: %u", static_cast<unsigned>(this->rx_ok_count_));
+  ESP_LOGCONFIG(TAG, "  RX bad: %u", static_cast<unsigned>(this->rx_bad_count_));
+  if (this->learned_arg0_ != 0x00) {
+    ESP_LOGCONFIG(TAG, "  Protocol variant (frame[5]): 0x%02X", this->learned_arg0_);
+  } else {
+    ESP_LOGCONFIG(TAG, "  Protocol variant (frame[5]): not yet learned");
+  }
+  if (this->flow_control_pin_ != nullptr) {
+    ESP_LOGCONFIG(TAG, "  Flow control pin set");
+  } else if (this->enable_polling_ || this->switch_count_ != 0) {
+    ESP_LOGCONFIG(TAG, "  Component flow control pin not set; relying on UART/transceiver configuration");
+  }
+}
+
+void V2ZoneSwitch::queue_zone_state_(uint8_t zone, bool target_on) {
+  if (!this->has_status_ || !this->online_) {
+    this->set_transaction_result_("no_status");
+    if (this->debug_) {
+      ESP_LOGW(TAG, "Ignoring zone request before first valid status frame");
+    }
+    return;
+  }
+
+  if (!this->pending_desired_) {
+    this->desired_mask_ = this->last_mask_;
+  }
+
+  const uint8_t bit = (uint8_t)(1 << (zone - 1));
+
+  if (target_on) {
+    this->desired_mask_ = (uint8_t)(this->desired_mask_ | bit);
+  } else {
+    this->desired_mask_ = (uint8_t)(this->desired_mask_ & (uint8_t)~bit);
+  }
+
+  this->pending_desired_ = true;
+}
+
+void V2ZoneSwitch::run_poll_cycle_() {
+  const uint32_t now = millis();
+  this->service_status_timeout_(now);
+  this->service_response_timeout_(now);
+  if (this->listen_only_) return;
+
+  if (!this->waiting_for_response_ && this->pending_desired_ && this->has_status_ && this->online_ &&
+      !this->require_fresh_status_before_write_ && this->tx_retry_due_(now)) {
+    const uint8_t diff = this->apply_spill_guard_((uint8_t)((this->desired_mask_ ^ this->last_mask_) & 0x3F));
+    if (diff != 0) {
+      uint8_t toggle_bit = 0;
+      for (uint8_t index = 0; index < 6; index++) {
+        uint8_t bit = (uint8_t)(1 << index);
+        if (diff & bit) {
+          toggle_bit = bit;
+          break;
+        }
+      }
+
+      if (toggle_bit != 0) {
+        if (!this->send_request_(toggle_bit)) {
+          this->next_tx_retry_ms_ = now + TX_RETRY_INTERVAL_MS;
+        }
+        return;
+      }
+    }
+
+    this->pending_desired_ = false;
+  }
+
+  if ((!this->enable_polling_ && !this->refresh_requested_) || this->waiting_for_response_ ||
+      (!this->refresh_requested_ && (now - this->last_poll_ms_) < this->poll_interval_ms_) ||
+      !this->tx_retry_due_(now)) {
+    return;
+  }
+
+  if (this->send_request_(0x00)) {
+    this->last_poll_ms_ = now;
+    this->refresh_requested_ = false;
+  } else {
+    this->next_tx_retry_ms_ = now + TX_RETRY_INTERVAL_MS;
+  }
+}
+
+void V2ZoneSwitch::service_response_timeout_(uint32_t now) {
+  if (!this->waiting_for_response_ || (now - this->last_tx_ms_) < this->poll_interval_ms_) {
+    return;
+  }
+
+  this->response_timeouts_++;
+  this->set_transaction_result_("response_timeout");
+  const bool missed_write = this->waiting_for_write_response_;
+  this->waiting_for_response_ = false;
+  this->waiting_for_write_response_ = false;
+
+  if (this->consecutive_misses_ < 0xFF) {
+    this->consecutive_misses_++;
+  }
+  if (this->consecutive_misses_ >= this->offline_miss_threshold_ && this->online_) {
+    this->online_ = false;
+    if (this->debug_) {
+      ESP_LOGW(TAG, "Marked offline after %u missed responses", this->consecutive_misses_);
+    }
+    this->publish_diagnostics_(true);
+  }
+  if (this->pending_desired_) {
+    this->require_fresh_status_before_write_ = true;
+  }
+  if (missed_write && this->debug_) {
+    ESP_LOGW(TAG, "Write response missed; waiting for fresh status before another toggle");
+  }
+}
+
+void V2ZoneSwitch::service_flow_control_() {
+  if (!this->tx_de_assert_pending_) return;
+  if (this->flow_control_pin_ == nullptr) {
+    this->tx_de_assert_pending_ = false;
+    return;
+  }
+  if (deadline_reached_(millis(), this->tx_de_assert_at_ms_)) {
+    this->flow_control_pin_->digital_write(false);
+    this->tx_de_assert_pending_ = false;
+  }
+}
+
+bool V2ZoneSwitch::tx_retry_due_(uint32_t now) const {
+  return this->next_tx_retry_ms_ == 0 || deadline_reached_(now, this->next_tx_retry_ms_);
+}
+
+void V2ZoneSwitch::loop() {
+  this->service_flow_control_();
+  this->run_poll_cycle_();
+
+  const uint32_t now = millis();
+  this->service_diagnostics_();
+  if (this->rx_index_ != 0 && (now - this->last_rx_byte_ms_) >= RX_FRAME_TIMEOUT_MS) {
+    this->rx_index_ = 0;
+    this->rx_bad_count_++;
+    this->publish_diagnostics_();
+  }
+
+  uint8_t processed = 0;
+  while (processed < MAX_RX_BYTES_PER_LOOP && this->available()) {
+    uint8_t byte;
+    if (!this->read_byte(&byte)) {
+      break;
+    }
+    processed++;
+    this->last_rx_byte_ms_ = millis();
+
+    if (this->rx_index_ == 0 && byte != 0xAA) {
+      continue;
+    }
+
+    this->rx_frame_[this->rx_index_++] = byte;
+
+    if (this->rx_index_ < 9) {
+      continue;
+    }
+
+    const bool handled = this->handle_frame_(this->rx_frame_);
+    this->rx_index_ = 0;
+    if (!handled) {
+      for (uint8_t index = 1; index < 9; index++) {
+        if (this->rx_frame_[index] == 0xAA) {
+          this->rx_index_ = 9 - index;
+          memmove(this->rx_frame_, &this->rx_frame_[index], this->rx_index_);
+          break;
+        }
+      }
+    }
+  }
+}
+
+uint8_t V2ZoneSwitch::crc8_maxim_(const uint8_t* data, size_t len) {
   // CRC-8/MAXIM (1-Wire): poly=0x31, refin=true, refout=true.
   // Using the equivalent LSB-first algorithm with the reflected polynomial
   // (0x8C) avoids per-byte bit-reversal and is both faster and simpler.
@@ -25,7 +245,7 @@ uint8_t ZoneSwitch::crc8_maxim_(const uint8_t* data, size_t len) {
   return crc;
 }
 
-uint8_t ZoneSwitch::get_tx_node_() const {
+uint8_t V2ZoneSwitch::get_tx_node_() const {
   if (this->node_locked_ && this->node_addr_ != 0) {
     return this->node_addr_;
   }
@@ -35,7 +255,7 @@ uint8_t ZoneSwitch::get_tx_node_() const {
   return this->tx_node_addr_;
 }
 
-void ZoneSwitch::save_locked_node_() {
+void V2ZoneSwitch::save_locked_node_() {
   if (!this->restore_node_ || !this->node_locked_ || this->node_addr_ == 0x00 || this->learned_arg0_ == 0x00) {
     return;
   }
@@ -59,7 +279,8 @@ void ZoneSwitch::save_locked_node_() {
   }
 }
 
-bool ZoneSwitch::send_request_(uint8_t arg1) {
+bool V2ZoneSwitch::send_request_(uint8_t arg1) {
+  if (this->listen_only_) return false;
   const uint8_t node = this->get_tx_node_();
   if (node == 0x00) {
     if (this->debug_) {
@@ -128,6 +349,8 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
     ESP_LOGD(TAG, "TX req: node=0x%02X seq=0x%02X arg1=0x%02X chk=0x%02X", node, frame[3], arg1, frame[7]);
   }
 
+  this->tx_count_++;
+  this->set_transaction_result_("awaiting_status");
   this->waiting_for_response_ = true;
   this->waiting_for_write_response_ = arg1 != 0x00;
   this->last_tx_ms_ = millis();
@@ -135,7 +358,7 @@ bool ZoneSwitch::send_request_(uint8_t arg1) {
   return true;
 }
 
-bool ZoneSwitch::handle_frame_(const uint8_t* frame) {
+bool V2ZoneSwitch::handle_frame_(const uint8_t* frame) {
   if (frame[0] != 0xAA || frame[8] != 0x55) {
     this->rx_bad_count_++;
     this->publish_diagnostics_();
@@ -257,6 +480,7 @@ bool ZoneSwitch::handle_frame_(const uint8_t* frame) {
     }
     this->has_status_ = true;
     this->last_status_ms_ = millis();
+    if (this->waiting_for_response_ && sequence_matches) this->set_transaction_result_("status_received");
     if (!this->waiting_for_write_response_ || sequence_matches) {
       this->waiting_for_response_ = false;
       this->waiting_for_write_response_ = false;
@@ -281,6 +505,5 @@ bool ZoneSwitch::handle_frame_(const uint8_t* frame) {
 
   return true;
 }
-
 }  // namespace zoneswitch
 }  // namespace esphome

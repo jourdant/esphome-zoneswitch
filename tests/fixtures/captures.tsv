@@ -1,0 +1,98 @@
+id	protocol	bytes	expected_mask	source	timestamp
+v1_press_01	v1	C0 30 01 08 80 01 02 03 04 05 97	01	docs/research/v1/2026-09-16_user-all-six-zones.md:6	17:55:10.870
+v1_press_02	v1	C0 30 01 08 00 01 02 03 04 05 17	00	docs/research/v1/2026-09-16_user-all-six-zones.md:7	17:55:16.424
+v1_press_03	v1	C0 30 02 08 00 81 02 03 04 05 97	02	docs/research/v1/2026-09-16_user-all-six-zones.md:8	17:55:20.146
+v1_press_04	v1	C0 30 02 08 00 01 02 03 04 05 17	00	docs/research/v1/2026-09-16_user-all-six-zones.md:9	17:55:24.419
+v1_press_05	v1	C0 30 04 08 00 01 82 03 04 05 97	04	docs/research/v1/2026-09-16_user-all-six-zones.md:10	17:55:27.586
+v1_press_06	v1	C0 30 04 08 00 01 02 03 04 05 17	00	docs/research/v1/2026-09-16_user-all-six-zones.md:11	17:55:31.055
+v1_press_07	v1	C0 30 08 08 00 01 02 83 04 05 97	08	docs/research/v1/2026-09-16_user-all-six-zones.md:12	17:55:33.313
+v1_press_08	v1	C0 30 08 08 00 01 02 03 04 05 17	00	docs/research/v1/2026-09-16_user-all-six-zones.md:13	17:55:35.885
+v1_press_09	v1	C0 30 10 08 00 01 02 03 84 05 97	10	docs/research/v1/2026-09-16_user-all-six-zones.md:14	17:55:38.707
+v1_press_10	v1	C0 30 10 08 00 01 02 03 04 05 17	00	docs/research/v1/2026-09-16_user-all-six-zones.md:15	17:55:41.419
+v1_press_11	v1	C0 30 20 08 00 01 02 03 04 85 97	20	docs/research/v1/2026-09-16_user-all-six-zones.md:16	17:55:43.003
+v1_press_12	v1	C0 30 20 08 00 01 02 03 04 05 17	00	docs/research/v1/2026-09-16_user-all-six-zones.md:17	17:55:44.947
+v1_press_13	v1	C0 30 02 08 00 81 02 03 04 05 97	02	docs/research/v1/2026-09-16_user-all-six-zones.md:18	17:55:47.162
+v1_press_14	v1	C0 30 10 08 00 81 02 03 84 05 17	12	docs/research/v1/2026-09-16_user-all-six-zones.md:19	17:55:48.876
+v2_idle_3	v2	AA 00 B4 66 01 00 00 62 55 AA B4 00 66 81 01 0C EC 55	0C	docs/research/v2/captures/saved_rs485_packets.md:3	10:37:15.361
+v2_idle_4	v2	AA 00 B4 67 01 00 00 ED 55 AA B4 00 67 81 01 0C 63 55	0C	docs/research/v2/captures/saved_rs485_packets.md:4	10:37:20.411
+v2_idle_5	v2	AA 00 B4 68 01 00 00 77 55 AA B4 00 68 81 01 0C F9 55	0C	docs/research/v2/captures/saved_rs485_packets.md:5	10:37:25.447
+v2_idle_6	v2	AA 00 B4 69 01 00 00 F8 55 AA B4 00 69 81 01 0C 76 55	0C	docs/research/v2/captures/saved_rs485_packets.md:6	10:37:30.986
+v2_idle_7	v2	AA 00 B4 6A 01 00 00 70 55 AA B4 00 6A 81 01 0C FE 55	0C	docs/research/v2/captures/saved_rs485_packets.md:7	10:37:35.717
+v2_idle_8	v2	AA 00 B4 6B 01 00 00 FF 55 AA B4 00 6B 81 01 0C 71 55	0C	docs/research/v2/captures/saved_rs485_packets.md:8	10:37:41.038
+v2_idle_9	v2	AA 00 B4 6C 01 00 00 79 55 AA B4 00 6C 81 01 0C F7 55	0C	docs/research/v2/captures/saved_rs485_packets.md:9	10:37:46.637
+v2_idle_10	v2	AA 00 B4 6D 01 00 00 F6 55 AA B4 00 6D 81 01 0C 78 55	0C	docs/research/v2/captures/saved_rs485_packets.md:10	10:37:51.291
+v2_idle_11	v2	AA 00 B4 6E 01 00 00 7E 55 AA B4 00 6E 81 01 0C F0 55	0C	docs/research/v2/captures/saved_rs485_packets.md:11	10:37:56.793
+v2_idle_12	v2	AA 00 B4 6F 01 00 00 F1 55 AA B4 00 6F 81 01 0C 7F 55	0C	docs/research/v2/captures/saved_rs485_packets.md:12	10:38:07.455
+v2_idle_13	v2	AA 00 B4 70 01 00 00 53 55 AA B4 00 70 81 01 0C DD 55	0C	docs/research/v2/captures/saved_rs485_packets.md:13	10:38:07.455
+v2_idle_14	v2	AA 00 B4 71 01 00 00 DC 55 AA B4 00 71 81 01 0C 52 55	0C	docs/research/v2/captures/saved_rs485_packets.md:14	10:38:12.458
+v2_idle_15	v2	AA 00 B4 72 01 00 00 54 55 AA B4 00 72 81 01 0C DA 55	0C	docs/research/v2/captures/saved_rs485_packets.md:15	10:38:17.583
+v2_idle_16	v2	AA 00 B4 73 01 00 00 DB 55 AA B4 00 73 81 01 0C 55 55	0C	docs/research/v2/captures/saved_rs485_packets.md:16	10:38:22.639
+v2_idle_17	v2	AA 00 B4 74 01 00 00 5D 55 AA B4 00 74 81 01 0C D3 55	0C	docs/research/v2/captures/saved_rs485_packets.md:17	10:38:27.689
+v2_idle_18	v2	AA 00 B4 75 01 00 00 D2 55 AA B4 00 75 81 01 0C 5C 55	0C	docs/research/v2/captures/saved_rs485_packets.md:18	10:38:33.258
+v2_idle_19	v2	AA 00 B4 76 01 00 00 5A 55 AA B4 00 76 81 01 0C D4 55	0C	docs/research/v2/captures/saved_rs485_packets.md:19	10:38:38.307
+v2_idle_20	v2	AA 00 B4 77 01 00 00 D5 55 AA B4 00 77 81 01 0C 5B 55	0C	docs/research/v2/captures/saved_rs485_packets.md:20	10:38:43.226
+v2_idle_21	v2	AA 00 B4 78 01 00 00 4F 55 AA B4 00 78 81 01 0C C1 55	0C	docs/research/v2/captures/saved_rs485_packets.md:21	10:38:48.882
+v2_idle_22	v2	AA 00 B4 79 01 00 00 C0 55 AA B4 00 79 81 01 0C 4E 55	0C	docs/research/v2/captures/saved_rs485_packets.md:22	10:38:53.931
+v2_idle_23	v2	AA 00 B4 7A 01 00 00 48 55 AA B4 00 7A 81 01 0C C6 55	0C	docs/research/v2/captures/saved_rs485_packets.md:23	10:38:58.956
+v2_idle_24	v2	AA 00 B4 7B 01 00 00 C7 55 AA B4 00 7B 81 01 0C 49 55	0C	docs/research/v2/captures/saved_rs485_packets.md:24	10:39:04.564
+v2_idle_25	v2	AA 00 B4 7C 01 00 00 41 55 AA B4 00 7C 81 01 0C CF 55	0C	docs/research/v2/captures/saved_rs485_packets.md:25	10:39:09.605
+v2_idle_26	v2	AA 00 B4 7D 01 00 00 CE 55 AA B4 00 7D 81 01 0C 40 55	0C	docs/research/v2/captures/saved_rs485_packets.md:26	10:39:15.155
+v2_idle_27	v2	AA 00 B4 7E 01 00 00 46 55 AA B4 00 7E 81 01 0C C8 55	0C	docs/research/v2/captures/saved_rs485_packets.md:27	10:39:19.783
+v2_idle_28	v2	AA 00 B4 7F 01 00 00 C9 55 AA B4 00 7F 81 01 0C 47 55	0C	docs/research/v2/captures/saved_rs485_packets.md:28	10:39:24.964
+v2_idle_29	v2	AA 00 B4 80 01 00 00 22 55 AA B4 00 80 81 01 0C AC 55	0C	docs/research/v2/captures/saved_rs485_packets.md:29	10:39:30.331
+v2_idle_30	v2	AA 00 B4 81 01 00 00 AD 55 AA B4 00 81 81 01 0C 23 55	0C	docs/research/v2/captures/saved_rs485_packets.md:30	10:39:35.453
+v2_idle_31	v2	AA 00 B4 82 01 00 00 25 55 AA B4 00 82 81 01 0C AB 55	0C	docs/research/v2/captures/saved_rs485_packets.md:31	10:39:40.453
+v2_idle_32	v2	AA 00 B4 83 01 00 00 AA 55 AA B4 00 83 81 01 0C 24 55	0C	docs/research/v2/captures/saved_rs485_packets.md:32	10:39:46.005
+v2_idle_33	v2	AA 00 B4 84 01 00 00 2C 55 AA B4 00 84 81 01 0C A2 55	0C	docs/research/v2/captures/saved_rs485_packets.md:33	10:39:51.103
+v2_idle_34	v2	AA 00 B4 85 01 00 00 A3 55 AA B4 00 85 81 01 0C 2D 55	0C	docs/research/v2/captures/saved_rs485_packets.md:34	10:39:56.208
+v2_idle_35	v2	AA 00 B4 86 01 00 00 2B 55 AA B4 00 86 81 01 0C A5 55	0C	docs/research/v2/captures/saved_rs485_packets.md:35	10:40:01.658
+v2_idle_36	v2	AA 00 B4 87 01 00 00 A4 55 AA B4 00 87 81 01 0C 2A 55	0C	docs/research/v2/captures/saved_rs485_packets.md:36	10:40:06.756
+v2_idle_37	v2	AA 00 B4 88 01 00 00 3E 55 AA B4 00 88 81 01 0C B0 55	0C	docs/research/v2/captures/saved_rs485_packets.md:37	10:40:11.708
+v2_idle_38	v2	AA 00 B4 89 01 00 00 B1 55 AA B4 00 89 81 01 0C 3F 55	0C	docs/research/v2/captures/saved_rs485_packets.md:38	10:40:17.327
+v2_idle_39	v2	AA 00 B4 8A 01 00 00 39 55 AA B4 00 8A 81 01 0C B7 55	0C	docs/research/v2/captures/saved_rs485_packets.md:39	10:40:22.429
+v2_idle_40	v2	AA 00 B4 8B 01 00 00 B6 55 AA B4 00 8B 81 01 0C 38 55	0C	docs/research/v2/captures/saved_rs485_packets.md:40	10:40:27.196
+v2_idle_41	v2	AA 00 B4 8C 01 00 00 30 55 AA B4 00 8C 81 01 0C BE 55	0C	docs/research/v2/captures/saved_rs485_packets.md:41	10:40:32.540
+v2_idle_42	v2	AA 00 B4 8D 01 00 00 BF 55 AA B4 00 8D 81 01 0C 31 55	0C	docs/research/v2/captures/saved_rs485_packets.md:42	10:40:37.625
+v2_idle_43	v2	AA 00 B4 97 01 00 00 9C 55 AA B4 00 97 81 01 0C 12 55	0C	docs/research/v2/captures/saved_rs485_packets.md:43	10:41:29.948
+v2_idle_44	v2	AA 00 B4 98 01 00 00 06 55 AA B4 00 98 81 01 0C 88 55	0C	docs/research/v2/captures/saved_rs485_packets.md:44	10:41:34.698
+v2_idle_45	v2	AA 00 B4 99 01 00 00 89 55 AA B4 00 99 81 01 0C 07 55	0C	docs/research/v2/captures/saved_rs485_packets.md:45	10:41:40.152
+v2_idle_46	v2	AA 00 B4 9A 01 00 00 01 55 AA B4 00 9A 81 01 0C 8F 55	0C	docs/research/v2/captures/saved_rs485_packets.md:46	10:41:45.251
+v2_idle_47	v2	AA 00 B4 9B 01 00 00 8E 55 AA B4 00 9B 81 01 0C 00 55	0C	docs/research/v2/captures/saved_rs485_packets.md:47	10:41:50.449
+v2_idle_48	v2	AA 00 B4 9C 01 00 00 08 55 AA B4 00 9C 81 01 0C 86 55	0C	docs/research/v2/captures/saved_rs485_packets.md:48	10:41:55.845
+v2_idle_49	v2	AA 00 B4 9D 01 00 00 87 55 AA B4 00 9D 81 01 0C 09 55	0C	docs/research/v2/captures/saved_rs485_packets.md:49	10:42:00.870
+v2_idle_50	v2	AA 00 B4 9E 01 00 00 0F 55 AA B4 00 9E 81 01 0C 81 55	0C	docs/research/v2/captures/saved_rs485_packets.md:50	10:42:05.942
+v2_idle_51	v2	AA 00 B4 9F 01 00 00 80 55 AA B4 00 9F 81 01 0C 0E 55	0C	docs/research/v2/captures/saved_rs485_packets.md:51	10:42:11.494
+v2_idle_52	v2	AA 00 B4 A0 01 00 00 52 55 AA B4 00 A0 81 01 0C DC 55	0C	docs/research/v2/captures/saved_rs485_packets.md:52	10:42:16.519
+v2_idle_53	v2	AA 00 B4 A1 01 00 00 DD 55 AA B4 00 A1 81 01 0C 53 55	0C	docs/research/v2/captures/saved_rs485_packets.md:53	10:42:21.461
+v2_idle_54	v2	AA 00 B4 A2 01 00 00 55 55 AA B4 00 A2 81 01 0C DB 55	0C	docs/research/v2/captures/saved_rs485_packets.md:54	10:42:27.157
+v2_idle_55	v2	AA 00 B4 A3 01 00 00 DA 55 AA B4 00 A3 81 01 0C 54 55	0C	docs/research/v2/captures/saved_rs485_packets.md:55	10:42:32.170
+v2_idle_56	v2	AA 00 B4 A4 01 00 00 5C 55 AA B4 00 A4 81 01 0C D2 55	0C	docs/research/v2/captures/saved_rs485_packets.md:56	10:42:37.203
+v2_idle_57	v2	AA 00 B4 A5 01 00 00 D3 55 AA B4 00 A5 81 01 0C 5D 55	0C	docs/research/v2/captures/saved_rs485_packets.md:57	10:42:42.843
+v2_idle_58	v2	AA 00 B4 A6 01 00 00 5B 55 AA B4 00 A6 81 01 0C D5 55	0C	docs/research/v2/captures/saved_rs485_packets.md:58	10:42:47.868
+v2_idle_59	v2	AA 00 B4 A7 01 00 00 D4 55 AA B4 00 A7 81 01 0C 5A 55	0C	docs/research/v2/captures/saved_rs485_packets.md:59	10:42:52.709
+v2_idle_60	v2	AA 00 B4 A8 01 00 00 4E 55 AA B4 00 A8 81 01 0C C0 55	0C	docs/research/v2/captures/saved_rs485_packets.md:60	10:42:58.017
+v2_idle_61	v2	AA 00 B4 A9 01 00 00 C1 55 AA B4 00 A9 81 01 0C 4F 55	0C	docs/research/v2/captures/saved_rs485_packets.md:61	10:43:03.591
+v2_idle_62	v2	AA 00 B4 AA 01 00 00 49 55 AA B4 00 AA 81 01 0C C7 55	0C	docs/research/v2/captures/saved_rs485_packets.md:62	10:43:08.448
+v2_idle_63	v2	AA 00 B4 AB 01 00 00 C6 55 AA B4 00 AB 81 01 0C 48 55	0C	docs/research/v2/captures/saved_rs485_packets.md:63	10:43:13.717
+v2_idle_64	v2	AA 00 B4 AC 01 00 00 40 55 AA B4 00 AC 81 01 0C CE 55	0C	docs/research/v2/captures/saved_rs485_packets.md:64	10:43:19.242
+v2_idle_65	v2	AA 00 B4 AD 01 00 00 CF 55 AA B4 00 AD 81 01 0C 41 55	0C	docs/research/v2/captures/saved_rs485_packets.md:65	10:43:23.969
+v2_idle_66	v2	AA 00 B4 AE 01 00 00 47 55 AA B4 00 AE 81 01 0C C9 55	0C	docs/research/v2/captures/saved_rs485_packets.md:66	10:43:29.391
+v2_idle_67	v2	AA 00 B4 AF 01 00 00 C8 55 AA B4 00 AF 81 01 0C 46 55	0C	docs/research/v2/captures/saved_rs485_packets.md:67	10:43:34.941
+v2_idle_68	v2	AA 00 B4 B0 01 00 00 6A 55 AA B4 00 B0 81 01 0C E4 55	0C	docs/research/v2/captures/saved_rs485_packets.md:68	10:43:39.707
+v2_idle_69	v2	AA 00 B4 B1 01 00 00 E5 55 AA B4 00 B1 81 01 0C 6B 55	0C	docs/research/v2/captures/saved_rs485_packets.md:69	10:43:45.115
+v2_idle_70	v2	AA 00 B4 B2 01 00 00 6D 55 AA B4 00 B2 81 01 0C E3 55	0C	docs/research/v2/captures/saved_rs485_packets.md:70	10:43:50.168
+v2_idle_71	v2	AA 00 B4 B3 01 00 00 E2 55 AA B4 00 B3 81 01 0C 6C 55	0C	docs/research/v2/captures/saved_rs485_packets.md:71	10:43:55.201
+v2_idle_72	v2	AA 00 B4 B4 01 00 00 64 55 AA B4 00 B4 81 01 0C EA 55	0C	docs/research/v2/captures/saved_rs485_packets.md:72	10:44:00.788
+v2_idle_73	v2	AA 00 B4 B5 01 00 00 EB 55 AA B4 00 B5 81 01 0C 65 55	0C	docs/research/v2/captures/saved_rs485_packets.md:73	10:44:05.813
+v2_idle_74	v2	AA 00 B4 B6 01 00 00 63 55 AA B4 00 B6 81 01 0C ED 55	0C	docs/research/v2/captures/saved_rs485_packets.md:74	10:44:10.984
+v2_idle_75	v2	AA 00 B4 B7 01 00 00 EC 55 AA B4 00 B7 81 01 0C 62 55	0C	docs/research/v2/captures/saved_rs485_packets.md:75	10:44:15.988
+v2_idle_76	v2	AA 00 B4 B8 01 00 00 76 55 AA B4 00 B8 81 01 0C F8 55	0C	docs/research/v2/captures/saved_rs485_packets.md:76	10:44:21.537
+v2_idle_77	v2	AA 00 B4 B9 01 00 00 F9 55 AA B4 00 B9 81 01 0C 77 55	0C	docs/research/v2/captures/saved_rs485_packets.md:77	10:44:26.454
+v2_idle_78	v2	AA 00 B4 BA 01 00 00 71 55 AA B4 00 BA 81 01 0C FF 55	0C	docs/research/v2/captures/saved_rs485_packets.md:78	10:44:32.137
+v2_idle_79	v2	AA 00 B4 BB 01 00 00 FE 55 AA B4 00 BB 81 01 0C 70 55	0C	docs/research/v2/captures/saved_rs485_packets.md:79	10:44:36.946
+v2_idle_80	v2	AA 00 B4 BC 01 00 00 78 55 AA B4 00 BC 81 01 0C F6 55	0C	docs/research/v2/captures/saved_rs485_packets.md:80	10:44:42.286
+v2_idle_81	v2	AA 00 B4 BD 01 00 00 F7 55 AA B4 00 BD 81 01 0C 79 55	0C	docs/research/v2/captures/saved_rs485_packets.md:81	10:44:47.811
+v2_idle_82	v2	AA 00 B4 BE 01 00 00 7F 55 AA B4 00 BE 81 01 0C F1 55	0C	docs/research/v2/captures/saved_rs485_packets.md:82	10:44:52.474
+v2_idle_83	v2	AA 00 B4 BF 01 00 00 F0 55 AA B4 00 BF 81 01 0C 7E 55	0C	docs/research/v2/captures/saved_rs485_packets.md:83	10:44:57.910
+v2_idle_84	v2	AA 00 B4 C0 01 00 00 C2 55 AA B4 00 C0 81 01 0C 4C 55	0C	docs/research/v2/captures/saved_rs485_packets.md:84	10:45:03.010
+v2_idle_85	v2	AA 00 B4 C1 01 00 00 4D 55 AA B4 00 C1 81 01 0C C3 55	0C	docs/research/v2/captures/saved_rs485_packets.md:85	10:45:08.201

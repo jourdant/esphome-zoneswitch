@@ -98,6 +98,28 @@ sensor:
   metric: rx_bad
   name: ZoneSwitch rejected frames
   entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zoneswitch_bus
+  metric: status_age
+  name: ZoneSwitch Status age
+  entity_category: diagnostic
+  unit_of_measurement: s
+  accuracy_decimals: 1
+- platform: zoneswitch
+  zoneswitch_id: zoneswitch_bus
+  metric: ack_timeouts
+  name: ZoneSwitch ACK timeouts
+  entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zoneswitch_bus
+  metric: response_timeouts
+  name: ZoneSwitch Response timeouts
+  entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zoneswitch_bus
+  metric: rejected_busy
+  name: ZoneSwitch Busy requests
+  entity_category: diagnostic
 button:
 - platform: restart
   name: Restart
@@ -129,6 +151,8 @@ zoneswitch:
 - id: zoneswitch_bus
   uart_id: rs485_uart
   protocol: v1
+  # Set true for passive commissioning (suppresses startup/refresh/control too).
+  listen_only: false
   flow_control_pin: GPIO4
   enable_polling: false
   status_timeout: 0s
@@ -167,4 +191,10 @@ binary_sensor:
   metric: online
   name: ZoneSwitch gateway online
   device_class: connectivity
+  entity_category: diagnostic
+text_sensor:
+- platform: zoneswitch
+  zoneswitch_id: zoneswitch_bus
+  metric: transaction_result
+  name: ZoneSwitch transaction result
   entity_category: diagnostic

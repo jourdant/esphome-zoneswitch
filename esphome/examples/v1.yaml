@@ -23,6 +23,8 @@ zoneswitch:
 - id: zs_bus
   uart_id: zoneswitch_uart
   protocol: v1
+  # Set true for passive commissioning (suppresses startup/refresh/control too).
+  listen_only: false
   flow_control_pin: GPIO4
   enable_polling: false
   status_timeout: 0s
@@ -79,6 +81,28 @@ sensor:
   metric: rx_bad
   name: ZoneSwitch RX Bad
   icon: mdi:counter
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: status_age
+  name: ZoneSwitch Status age
+  entity_category: diagnostic
+  unit_of_measurement: s
+  accuracy_decimals: 1
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: ack_timeouts
+  name: ZoneSwitch ACK timeouts
+  entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: response_timeouts
+  name: ZoneSwitch Response timeouts
+  entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: rejected_busy
+  name: ZoneSwitch Busy requests
+  entity_category: diagnostic
 binary_sensor:
 - platform: zoneswitch
   id: zoneswitch_online_status
@@ -90,3 +114,9 @@ button:
 - platform: zoneswitch
   zoneswitch_id: zs_bus
   name: Refresh zone state
+text_sensor:
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: transaction_result
+  name: ZoneSwitch transaction result
+  entity_category: diagnostic

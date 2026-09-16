@@ -5,7 +5,11 @@
 #include <vector>
 namespace esphome {
 namespace uart {
+class UARTComponent {};
 class UARTDevice {
+ protected:
+  UARTComponent* parent_{nullptr};
+
  public:
   std::deque<uint8_t> rx;
   std::vector<std::vector<uint8_t>> tx;

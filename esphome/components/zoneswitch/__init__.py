@@ -17,9 +17,10 @@ MULTI_CONF = True
 zoneswitch_ns = cg.esphome_ns.namespace("zoneswitch")
 ZoneSwitch = zoneswitch_ns.class_("ZoneSwitch", uart.UARTDevice, cg.Component)
 
-Protocol = zoneswitch_ns.enum("Protocol", is_class=True)
-PROTOCOLS = {"v1": Protocol.V1, "v2": Protocol.V2}
+V1ZoneSwitch = zoneswitch_ns.class_("V1ZoneSwitch", ZoneSwitch)
+V2ZoneSwitch = zoneswitch_ns.class_("V2ZoneSwitch", ZoneSwitch)
 CONF_PROTOCOL = "protocol"
+CONF_LISTEN_ONLY = "listen_only"
 
 CONF_ZONESWITCH_ID = "zoneswitch_id"
 CONF_FLOW_CONTROL_PIN = "flow_control_pin"
@@ -63,21 +64,18 @@ CONFIG_SCHEMA = uart.UART_DEVICE_SCHEMA.extend(
         cv.Optional(CONF_PROTOCOL, default="v2"): cv.one_of("v1", "v2", lower=True),
         cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
         cv.Optional(CONF_DEBUG, default=False): cv.boolean,
+        cv.Optional(CONF_LISTEN_ONLY, default=False): cv.boolean,
         cv.Optional(CONF_POLL_INTERVAL, default="5000ms"): _validate_poll_interval,
-        cv.Optional(CONF_TX_NODE_ADDR, default=0x48): cv.int_range(min=0, max=255),
+        cv.Optional(CONF_TX_NODE_ADDR): cv.int_range(min=0, max=255),
         cv.Optional(CONF_ENABLE_POLLING): cv.boolean,
-        cv.Optional(CONF_OFFLINE_MISS_THRESHOLD, default=5): cv.int_range(
-            min=1, max=255
-        ),
+        cv.Optional(CONF_OFFLINE_MISS_THRESHOLD): cv.int_range(min=1, max=255),
         cv.Optional(CONF_SPILL_ZONE, default=0): cv.int_range(min=0, max=6),
         cv.Optional(
             CONF_TX_IDLE_GUARD, default="20ms"
         ): cv.positive_time_period_milliseconds,
-        cv.Optional(CONF_NODE_CONFIRMATIONS, default=3): cv.int_range(min=1, max=10),
-        cv.Optional(CONF_NODE_MISMATCH_THRESHOLD, default=5): cv.int_range(
-            min=1, max=255
-        ),
-        cv.Optional(CONF_RESTORE_NODE, default=False): cv.boolean,
+        cv.Optional(CONF_NODE_CONFIRMATIONS): cv.int_range(min=1, max=10),
+        cv.Optional(CONF_NODE_MISMATCH_THRESHOLD): cv.int_range(min=1, max=255),
+        cv.Optional(CONF_RESTORE_NODE): cv.boolean,
         cv.Optional(CONF_STATUS_TIMEOUT): _validate_bounded_milliseconds,
         cv.Optional(
             CONF_DIAGNOSTIC_UPDATE_INTERVAL, default="10s"
@@ -88,7 +86,23 @@ CONFIG_SCHEMA = uart.UART_DEVICE_SCHEMA.extend(
 
 def _protocol_defaults(config):
     v1 = config[CONF_PROTOCOL] == "v1"
-    config.setdefault(CONF_ENABLE_POLLING, not v1)
+    v2_defaults = {
+        CONF_TX_NODE_ADDR: 0x48,
+        CONF_OFFLINE_MISS_THRESHOLD: 5,
+        CONF_NODE_CONFIRMATIONS: 3,
+        CONF_NODE_MISMATCH_THRESHOLD: 5,
+        CONF_RESTORE_NODE: False,
+    }
+    if v1:
+        for key in v2_defaults:
+            if key in config:
+                raise cv.Invalid(f"{key} applies only to protocol v2")
+    else:
+        for key, value in v2_defaults.items():
+            config.setdefault(key, value)
+    config.setdefault(CONF_ENABLE_POLLING, not v1 and not config[CONF_LISTEN_ONLY])
+    if config[CONF_LISTEN_ONLY] and config[CONF_ENABLE_POLLING]:
+        raise cv.Invalid("listen_only cannot be combined with enable_polling: true")
     config.setdefault(
         CONF_STATUS_TIMEOUT, _validate_bounded_milliseconds("0s" if v1 else "30s")
     )
@@ -119,8 +133,6 @@ def _protocol_defaults(config):
             raise cv.Invalid("V1 direction pin must be an internal ESP32 GPIO")
         if pin.get("inverted") or pin.get("mode", {}).get("open_drain"):
             raise cv.Invalid("V1 direction pin must be non-inverted and push-pull")
-        if config[CONF_RESTORE_NODE]:
-            raise cv.Invalid("restore_node applies only to protocol v2")
     return config
 
 
@@ -167,6 +179,9 @@ FINAL_VALIDATE_SCHEMA = _final_validate
 
 
 async def to_code(config):
+    config[CONF_ID].type = (
+        V1ZoneSwitch if config[CONF_PROTOCOL] == "v1" else V2ZoneSwitch
+    )
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
@@ -175,22 +190,36 @@ async def to_code(config):
         pin = await gpio_pin_expression(config[CONF_FLOW_CONTROL_PIN])
         cg.add(var.set_flow_control_pin(pin))
 
-    cg.add(var.set_protocol(PROTOCOLS[config[CONF_PROTOCOL]]))
+    cg.add(var.set_listen_only(config[CONF_LISTEN_ONLY]))
     if config[CONF_PROTOCOL] == "v1":
         cg.add_define("USE_ZONESWITCH_V1")
         cg.add(var.set_v1_direction_pin(config[CONF_FLOW_CONTROL_PIN]["number"]))
 
     cg.add(var.set_debug(config[CONF_DEBUG]))
     cg.add(var.set_poll_interval(config[CONF_POLL_INTERVAL]))
-    cg.add(var.set_tx_node_addr(config[CONF_TX_NODE_ADDR]))
     cg.add(var.set_enable_polling(config[CONF_ENABLE_POLLING]))
-    cg.add(var.set_offline_miss_threshold(config[CONF_OFFLINE_MISS_THRESHOLD]))
     cg.add(var.set_spill_zone(config[CONF_SPILL_ZONE]))
     cg.add(var.set_tx_idle_guard(config[CONF_TX_IDLE_GUARD]))
-    cg.add(var.set_node_confirmations(config[CONF_NODE_CONFIRMATIONS]))
-    cg.add(var.set_node_mismatch_threshold(config[CONF_NODE_MISMATCH_THRESHOLD]))
-    cg.add(var.set_restore_node(config[CONF_RESTORE_NODE]))
-    preference_key = zlib.crc32(f"zoneswitch:{config[CONF_ID].id}".encode())
-    cg.add(var.set_preference_key(preference_key))
     cg.add(var.set_status_timeout(config[CONF_STATUS_TIMEOUT]))
     cg.add(var.set_diagnostic_update_interval(config[CONF_DIAGNOSTIC_UPDATE_INTERVAL]))
+
+    if config[CONF_PROTOCOL] == "v2":
+        cg.add(var.set_tx_node_addr(config[CONF_TX_NODE_ADDR]))
+        cg.add(var.set_offline_miss_threshold(config[CONF_OFFLINE_MISS_THRESHOLD]))
+        cg.add(var.set_node_confirmations(config[CONF_NODE_CONFIRMATIONS]))
+        cg.add(var.set_node_mismatch_threshold(config[CONF_NODE_MISMATCH_THRESHOLD]))
+        cg.add(var.set_restore_node(config[CONF_RESTORE_NODE]))
+        preference_key = zlib.crc32(f"zoneswitch:{config[CONF_ID].id}".encode())
+        cg.add(var.set_preference_key(preference_key))
+
+
+def validate_diagnostic_metric(config):
+    full = fv.full_config.get()
+    path = full.get_path_for_id(config[CONF_ZONESWITCH_ID])[:-1]
+    hub = full.get_config_for_path(path)
+    metric = config["metric"]
+    if hub[CONF_PROTOCOL] == "v1" and metric == "node_address":
+        raise cv.Invalid("node_address applies only to protocol v2")
+    if hub[CONF_PROTOCOL] == "v2" and metric in ("ack_timeouts", "rejected_busy"):
+        raise cv.Invalid(f"{metric} applies only to protocol v1")
+    return config

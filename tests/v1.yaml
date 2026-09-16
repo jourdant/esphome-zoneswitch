@@ -36,6 +36,26 @@ sensor:
     zoneswitch_id: test_zs
     metric: rx_ok
     name: Valid frames
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: status_age
+    name: status_age
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: tx_count
+    name: tx_count
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: response_timeouts
+    name: response_timeouts
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: ack_timeouts
+    name: ack_timeouts
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: rejected_busy
+    name: rejected_busy
 binary_sensor:
   - platform: zoneswitch
     zoneswitch_id: test_zs
@@ -48,5 +68,5 @@ binary_sensor:
 text_sensor:
   - platform: zoneswitch
     zoneswitch_id: test_zs
-    metric: node_address
-    name: Node
+    metric: transaction_result
+    name: Transaction result

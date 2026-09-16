@@ -34,6 +34,18 @@ sensor:
     zoneswitch_id: test_zs
     metric: rx_ok
     name: Valid frames
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: status_age
+    name: status_age
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: tx_count
+    name: tx_count
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: response_timeouts
+    name: response_timeouts
 binary_sensor:
   - platform: zoneswitch
     zoneswitch_id: test_zs
@@ -48,3 +60,7 @@ text_sensor:
     zoneswitch_id: test_zs
     metric: node_address
     name: Node
+  - platform: zoneswitch
+    zoneswitch_id: test_zs
+    metric: transaction_result
+    name: Transaction result

@@ -4,7 +4,7 @@ from esphome.const import CONF_ID
 
 from esphome.components import sensor
 
-from .. import ZoneSwitch, zoneswitch_ns
+from .. import ZoneSwitch, validate_diagnostic_metric, zoneswitch_ns
 
 DEPENDENCIES = ["zoneswitch"]
 CODEOWNERS = ["@jourdant"]
@@ -14,6 +14,11 @@ CONF_METRIC = "metric"
 
 DiagnosticMetric = zoneswitch_ns.enum("DiagnosticMetric")
 DIAGNOSTIC_METRICS = {
+    "rejected_busy": DiagnosticMetric.DIAGNOSTIC_METRIC_REJECTED_BUSY,
+    "response_timeouts": DiagnosticMetric.DIAGNOSTIC_METRIC_RESPONSE_TIMEOUTS,
+    "ack_timeouts": DiagnosticMetric.DIAGNOSTIC_METRIC_ACK_TIMEOUTS,
+    "tx_count": DiagnosticMetric.DIAGNOSTIC_METRIC_TX_COUNT,
+    "status_age": DiagnosticMetric.DIAGNOSTIC_METRIC_STATUS_AGE,
     "node_address": DiagnosticMetric.DIAGNOSTIC_METRIC_NODE_ADDRESS,
     "online": DiagnosticMetric.DIAGNOSTIC_METRIC_ONLINE,
     "rx_ok": DiagnosticMetric.DIAGNOSTIC_METRIC_RX_OK,
@@ -35,6 +40,9 @@ CONFIG_SCHEMA = (
     )
     .extend(cv.COMPONENT_SCHEMA)
 )
+
+
+FINAL_VALIDATE_SCHEMA = validate_diagnostic_metric
 
 
 async def to_code(config):

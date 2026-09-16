@@ -1,78 +1,15 @@
+#include "protocol_v1.h"
+
 #include <cstring>
 
 #include "esphome/core/log.h"
-#include "zoneswitch.h"
-
-#ifdef USE_ZONESWITCH_V1
-#include "esphome/components/uart/uart_component_esp_idf.h"
-#include "hal/gpio_ll.h"
-#include "hal/uart_ll.h"
-#endif
-
 namespace esphome {
 namespace zoneswitch {
-
 static const char* const TAG = "zoneswitch.v1";
 static constexpr uint32_t RESPONSE_TIMEOUT_MS = 250;
 static constexpr uint32_t TRANSACTION_GAP_MS = 1000;
 static constexpr uint32_t FRAME_TIMEOUT_MS = 20;
-
-bool ZoneSwitch::send_v1_byte_(uint8_t byte) {
-#ifdef USE_ZONESWITCH_V1
-  // The component exclusively owns TX. Do not mix uart.write/bridges with this
-  // direct-FIFO transport. IDF continues to own the RX ISR and ring buffer.
-  auto* bus = static_cast<uart::IDFUARTComponent*>(this->parent_);
-  auto* hw = UART_LL_GET_HW(bus->get_hw_serial_number());
-  if (!uart_ll_is_tx_idle(hw)) return false;
-  static portMUX_TYPE tx_mux = portMUX_INITIALIZER_UNLOCKED;
-  portENTER_CRITICAL(&tx_mux);
-  gpio_ll_set_level(&GPIO, this->v1_direction_pin_, 1);
-  delay_microseconds_safe(10);
-  uart_ll_write_txfifo(hw, &byte, 1);
-  const uint32_t started = micros();
-  bool timed_out = false;
-  while (!uart_ll_is_tx_idle(hw)) {
-    if (static_cast<uint32_t>(micros() - started) >= 200) {
-      timed_out = true;
-      break;
-    }
-  }
-  gpio_ll_set_level(&GPIO, this->v1_direction_pin_, 0);
-  portEXIT_CRITICAL(&tx_mux);
-  return !timed_out;
-#else
-  return false;
-#endif
-}
-
-bool ZoneSwitch::transact_v1_(uint8_t mask) {
-#ifdef USE_ZONESWITCH_V1
-  if (!this->send_v1_byte_(0xC0)) return false;
-  auto* bus = static_cast<uart::IDFUARTComponent*>(this->parent_);
-  const auto port = static_cast<uart_port_t>(bus->get_hw_serial_number());
-  const uint32_t started = micros();
-  uint8_t ack = 0;
-  int received = 0;
-  // Interrupts remain enabled during this bounded ACK wait. No logging or UART
-  // debug callbacks between ACK and mask: they spoil the measured turnaround.
-  while (static_cast<uint32_t>(micros() - started) < 10000) {
-    received = uart_read_bytes(port, &ack, 1, 0);
-    if (received != 0) break;
-  }
-  if (received != 1 || ack != 0x30) {
-    ESP_LOGW(TAG, "Handshake failed: read=%d ACK=%02X; no mask sent, no retry", received, ack);
-    return false;
-  }
-  const bool sent = this->send_v1_byte_(mask);
-  if (this->debug_) ESP_LOGD(TAG, "TX C0 -> RX 30 -> TX %02X; DE LOW; sent=%s", mask, YESNO(sent));
-  return sent;
-#else
-  ESP_LOGE(TAG, "V1 requires the ESP32-S3 ESP-IDF transport");
-  return false;
-#endif
-}
-
-void ZoneSwitch::fail_v1_transaction_() {
+void V1ZoneSwitch::fail_v1_transaction_() {
   this->waiting_for_response_ = false;
   this->waiting_for_write_response_ = false;
   this->v1_pending_zone_ = 0;
@@ -86,7 +23,7 @@ void ZoneSwitch::fail_v1_transaction_() {
   ESP_LOGW(TAG, "V1 transaction unconfirmed; command cancelled; refresh state before another command");
 }
 
-bool ZoneSwitch::handle_v1_status_(const uint8_t* frame) {
+bool V1ZoneSwitch::handle_v1_status_(const uint8_t* frame) {
   uint8_t sum = frame[0];
   uint8_t mask = 0;
   bool valid = frame[0] == 0x08;
@@ -109,6 +46,7 @@ bool ZoneSwitch::handle_v1_status_(const uint8_t* frame) {
   this->online_ = true;
   this->last_status_ms_ = millis();
   if (this->waiting_for_response_) {
+    this->set_transaction_result_("status_received");
     // V1 has no sequence/address correlation. Shared-bus collisions remain a
     // protocol limitation, not proof that every response belongs to our query.
     this->v1_write_ready_ = !this->waiting_for_write_response_ && this->v1_pending_zone_ != 0;
@@ -121,7 +59,7 @@ bool ZoneSwitch::handle_v1_status_(const uint8_t* frame) {
   return true;
 }
 
-void ZoneSwitch::receive_v1_byte_(uint8_t byte) {
+void V1ZoneSwitch::receive_v1_byte_(uint8_t byte) {
   // Recognise an observed C0/30/mask prefix so zone 4's mask 08 is not
   // counted as a corrupt status. Also accept bare statuses after our own TX.
   if (this->rx_index_ == 0) {
@@ -156,7 +94,7 @@ void ZoneSwitch::receive_v1_byte_(uint8_t byte) {
   }
 }
 
-void ZoneSwitch::loop_v1_() {
+void V1ZoneSwitch::loop() {
   uint32_t now = millis();
   if (now - this->last_rx_byte_ms_ >= FRAME_TIMEOUT_MS) this->v1_prefix_index_ = 0;
   if (this->rx_index_ != 0 && now - this->last_rx_byte_ms_ >= FRAME_TIMEOUT_MS) {
@@ -172,11 +110,15 @@ void ZoneSwitch::loop_v1_() {
     this->receive_v1_byte_(byte);
   }
   now = millis();
-  if (this->diagnostics_dirty_ && now - this->last_diagnostic_publish_ms_ >= this->diagnostic_update_interval_ms_)
-    this->publish_diagnostics_(true);
+  this->service_diagnostics_();
   this->service_status_timeout_(now);
+  if (this->listen_only_) return;
   if (this->waiting_for_response_) {
-    if (now - this->last_tx_ms_ >= RESPONSE_TIMEOUT_MS) this->fail_v1_transaction_();
+    if (now - this->last_tx_ms_ >= RESPONSE_TIMEOUT_MS) {
+      this->response_timeouts_++;
+      this->set_transaction_result_("response_timeout");
+      this->fail_v1_transaction_();
+    }
     return;
   }
   if (this->available() || this->rx_index_ != 0 || now - this->last_rx_byte_ms_ < this->tx_idle_guard_ms_ ||
@@ -207,13 +149,51 @@ void ZoneSwitch::loop_v1_() {
   this->last_tx_ms_ = now;
   this->last_poll_ms_ = now;
   this->v1_has_tx_ = true;
-  if (!this->transact_v1_(mask)) {
+  this->tx_count_++;
+  const auto result = this->transact_v1_(mask);
+  if (result != V1TransportResult::SENT) {
+    if (result == V1TransportResult::ACK_TIMEOUT) this->ack_timeouts_++;
+    this->set_transaction_result_(result == V1TransportResult::ACK_TIMEOUT   ? "ack_timeout"
+                                  : result == V1TransportResult::ACK_INVALID ? "ack_invalid"
+                                                                             : "tx_failed");
     this->fail_v1_transaction_();
     return;
   }
+  this->set_transaction_result_("awaiting_status");
   this->waiting_for_response_ = true;
   this->waiting_for_write_response_ = mask != 0;
   this->last_tx_ms_ = millis();
+}
+void V1ZoneSwitch::setup() {
+  ZoneSwitch::setup();
+  refresh_requested_ = !listen_only_;  // One startup query; periodic polling defaults off.
+}
+void V1ZoneSwitch::dump_config() {
+  ZoneSwitch::dump_config();
+  ESP_LOGCONFIG(TAG, "  Protocol: V1 (experimental)");
+  ESP_LOGCONFIG(TAG, "  External queries can leave wall LEDs stale and delay physical button response");
+}
+void V1ZoneSwitch::queue_zone_state_(uint8_t zone, bool target_on) {
+  if (waiting_for_response_ || v1_pending_zone_ != 0) {
+    rejected_busy_++;
+    set_transaction_result_("rejected_busy");
+    return;
+  }
+  v1_pending_zone_ = zone;
+  v1_target_on_ = target_on;
+  v1_write_ready_ = false;
+  refresh_requested_ = true;
+}
+void V1ZoneSwitch::status_expired_() {
+  v1_pending_zone_ = 0;
+  v1_write_ready_ = false;
+  refresh_requested_ = false;
+}
+V1TransportResult V1ZoneSwitch::transact_v1_(uint8_t mask) {
+  if (listen_only_) return V1TransportResult::TX_FAILED;
+  auto result = transact_v1(parent_, v1_direction_pin_, mask);
+  if (debug_ && result == V1TransportResult::SENT) ESP_LOGD(TAG, "TX C0 -> RX 30 -> TX %02X; DE LOW", mask);
+  return result;
 }
 
 }  // namespace zoneswitch

@@ -4,7 +4,7 @@ from esphome.const import CONF_ID
 
 from esphome.components import text_sensor
 
-from .. import ZoneSwitch, zoneswitch_ns
+from .. import ZoneSwitch, validate_diagnostic_metric, zoneswitch_ns
 
 DEPENDENCIES = ["zoneswitch"]
 CODEOWNERS = ["@jourdant"]
@@ -15,6 +15,7 @@ CONF_FORMAT = "format"
 
 TextSensorMetric = zoneswitch_ns.enum("TextSensorMetric")
 TEXT_SENSOR_METRICS = {
+    "transaction_result": TextSensorMetric.TEXT_SENSOR_METRIC_TRANSACTION_RESULT,
     "node_address": TextSensorMetric.TEXT_SENSOR_METRIC_NODE_ADDRESS,
 }
 
@@ -42,6 +43,9 @@ CONFIG_SCHEMA = (
     )
     .extend(cv.COMPONENT_SCHEMA)
 )
+
+
+FINAL_VALIDATE_SCHEMA = validate_diagnostic_metric
 
 
 async def to_code(config):
