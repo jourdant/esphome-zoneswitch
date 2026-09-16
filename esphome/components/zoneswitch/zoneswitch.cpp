@@ -54,7 +54,6 @@ void ZoneSwitch::setup() {
 void ZoneSwitch::dump_config() {
   ESP_LOGCONFIG(TAG, "ZoneSwitch:");
   ESP_LOGCONFIG(TAG, "  Protocol: %s", this->protocol_ == Protocol::V1 ? "V1 (experimental)" : "V2");
-  check_uart_settings(this->protocol_ == Protocol::V1 ? 250000 : 9600);
   if (this->protocol_ == Protocol::V1) {
     ESP_LOGCONFIG(TAG, "  Wall LEDs may remain stale; external queries can impair wall-button response");
     ESP_LOGCONFIG(TAG, "  Polling: %s; node-address diagnostics do not apply", YESNO(this->enable_polling_));
