@@ -16,3 +16,24 @@ These are software checks. The V1 direct-FIFO handshake was previously tested
 on the user's bench; integrated-component deployment and on-wire coexistence
 remain distinct from that earlier evidence. Wall LED/physical-button limitations
 remain open and are documented in the V1 protocol notes.
+
+## Integrated V1 device check
+
+Device configuration pinned to `6c4c09392835c565f029930ca48940582a9ade0b`.
+ESPHome dashboard compiled and uploaded OTA; the device reconnected and passed
+its boot-success interval. HA exposed zones 2–5, Refresh, diagnostics, onboard
+LED and SHT40/OPT3001 readings. Startup produced one valid status and zero rejects.
+
+| Local time | Integrated control | Controller-reported mask |
+|---|---|---|
+| 20:54:21 | Startup state | 12 (zones 2/5 ON) |
+| 20:55:18.716 | Query before Zone 2 OFF | 12 |
+| 20:55:19.744 | Toggle 02 for OFF | 10 (only zone 5 ON) |
+| 20:55:38.686 | Query before Zone 2 ON | 10 |
+| 20:55:39.703 | Toggle 02 for ON | 12 (original state restored) |
+
+Each active query/toggle logged `TX C0 -> RX 30 -> TX MASK; DE LOW; sent=YES`.
+The component published Zone 2 OFF then ON only after received status. Other zones
+were left unchanged. This confirms one integrated control cycle, not physical
+LED synchronisation, damper movement, or long-term reliability. No periodic
+polling was enabled. The prior wall-panel limitation remains unresolved.
