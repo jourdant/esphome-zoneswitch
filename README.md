@@ -26,10 +26,11 @@ different hardware models. Socket appearance alone is not identification.
 | Experimental: software control works; wall LEDs can stay stale and buttons can temporarily stop responding after external traffic | **Confirmed fully working**; selected when `protocol` is omitted |
 | **[V1.0-T setup guide →](docs/guides/v1.0-t.md)** | **[V2 setup guide →](docs/guides/v2.1.md)** |
 
-The [known compatible boards](docs/hardware/compatibility.md) document includes
+The [board identification and compatibility](docs/hardware/compatibility.md) document includes
 front/back photographs, date markings and contributor confirmations, including
 @threeseed's working V2 board. Printed dates are recorded without assuming they
-are manufacturing dates.
+are manufacturing dates. Boards awaiting testing, such as @mattaustin's Touch Pad
+V2.3, are explicitly marked as unconfirmed within their expected protocol group.
 
 For a different or unreadable marking, collect the PCB revision and a passive
 capture before choosing a protocol. A matching connector does not establish its pinout.
@@ -48,7 +49,7 @@ received controller state; they do not measure airflow.
 
 | Looking for… | Start here |
 |---|---|
-| Board photos, version markings and compatibility reports | [Known compatible boards](docs/hardware/compatibility.md) |
+| Board photos, version markings and compatibility reports | [Board identification and compatibility](docs/hardware/compatibility.md) |
 | UART settings, entities, listen-only mode and diagnostics | [Configuration reference](docs/configuration.md) |
 | A complete device config or a fragment to merge | [Examples](esphome/examples/README.md) |
 | Packet formats, timing and evidence | [Protocol specifications](docs/specs/protocols/README.md) |
@@ -70,3 +71,4 @@ Here's a list of contributors in no particular order.
 - [@jourdant](https://github.com/jourdant)
 - [@ashish-khokhar](https://github.com/ashish-khokhar)
 - [@threeseed](https://github.com/threeseed)
+- [@mattaustin](https://github.com/mattaustin)
