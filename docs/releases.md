@@ -31,8 +31,8 @@ name tested ESPHome versions, and distinguish V2 support from V1 experimental st
 
 Set `external_components.source.ref` to the published tag or full tested commit
 SHA, then compile and install. Preserve the previous device YAML and ref before
-updating so a rollback can rebuild the prior firmware. Examples on a moving
-branch are development examples, not immutable release artifacts.
+updating so a rollback can rebuild the prior firmware. Examples follow `main`,
+which tracks current code and is not an immutable release artifact.
 
 No release tag is created solely by a documentation or refactoring pass; the
 checks and review above must substantiate the named release.

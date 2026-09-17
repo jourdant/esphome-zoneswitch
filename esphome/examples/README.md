@@ -10,8 +10,8 @@
 Choose a revision in the [main README](../../README.md) before installing.
 Fragments do not contain the complete ESP32, network or API setup. Do not paste
 a second `uart`, `sensor` or other duplicate YAML key; merge list entries into the
-existing section. Pin `external_components.source.ref` to a tested commit or a
-published release tag. Branch references in examples are for development.
+existing section. Examples follow `main`. Pin `external_components.source.ref`
+to a tested commit or a published release tag for reproducible installations.
 
 For passive commissioning set `listen_only: true` and disable explicitly enabled
 polling. The [configuration reference](../../docs/configuration.md) explains why

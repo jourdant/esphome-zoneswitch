@@ -132,7 +132,7 @@ external_components:
 - source:
     type: git
     url: https://github.com/jourdant/esphome-zoneswitch
-    ref: codex/protocol-v1-v2
+    ref: main
   components:
   - zoneswitch
   refresh: 0s
