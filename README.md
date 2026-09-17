@@ -53,3 +53,11 @@ Protocol support and release status are separate: V2 is confirmed on hardware,
 while changes on a development branch still need release validation.
 Pin a tested commit or published release tag for an installation. This refactor's
 software checks are recorded in the [validation log](docs/research/validation/2026-09-17.md).
+
+## Acknowledgements
+
+A big thanks to everyone who has participated in getting the project to where it is.
+Here's a list of contributors in no particular order.
+
+- [@jourdant](https://github.com/jourdant)
+- [@ashish-khokhar](https://github.com/ashish-khokhar)
