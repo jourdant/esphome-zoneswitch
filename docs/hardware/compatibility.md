@@ -8,8 +8,12 @@ Record both when identifying your hardware. Protocol compatibility below reflect
 tested boards; printed version numbers and dates alone do not establish compatibility.
 Each row records a contributor's reported board, not necessarily a distinct revision.
 Boards are grouped by confirmed or expected protocol, with untested entries explicitly
-marked. **Date added** is the date the entry was first added to this document
-(YYYY-MM-DD), not the PCB date or installation date.
+marked. **Date added** records project history (YYYY-MM-DD): original contributors
+use the repository creation date, and later entries use the contributor's initial
+board or working-configuration report. It is not the date this table was written,
+the PCB date, the installation date or a claim about when protocol support was verified.
+The repository was [created on 2026-03-08](https://api.github.com/repos/jourdant/esphome-zoneswitch);
+@threeseed's [working configuration was posted on 2026-07-20](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5018118560).
 
 Within each protocol table, rows are sorted by PCB version in ascending order,
 using the front-side marking where available and otherwise the back-side marking.
@@ -23,8 +27,8 @@ Follow the [V2 setup guide](../guides/v2.1.md).
 | Date added | Front (LEDs) | Back (RJ12) | PCB markings | Printed date / installation | Contributor / status |
 |---|---|---|---|---|---|
 | 2026-09-17 | <img src="../assets/mattaustin-front.jpg" width="180" alt="Mattaustin's LED-side PCB marked Zone Switch Touch Pad V2.3 and 2015.06"> | <img src="../assets/mattaustin-back.jpg" width="180" alt="Rear of Mattaustin's PCB with the modular connector and no visible version marking; contributor-redacted labels preserved"> | Front: **Zone Switch Touch Pad V2.3**<br>Back: **No version marking visible** | `2015.06` (June 2015); meaning unconfirmed. Installation unknown. | [@mattaustin](https://github.com/mattaustin) · [Photos and report](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5710688310) <br>**Awaiting V2 confirmation** |
-| 2026-09-17 | <img src="../assets/ashish-front.jpeg" width="180" alt="Ashish's LED-side PCB marked Zone Switch Touchpad V2.40 and 20190813"> | <img src="../assets/v2.1.png" width="180" alt="Rear of Ashish's PCB marked SMD Version V2.1 beside the RJ12 connector"> | Front: **Zone Switch Touchpad V2.40**<br>Back: **SMD Version V2.1** | `20190813` (13 August 2019); meaning unconfirmed. Installation unknown. | [@ashish-khokhar](https://github.com/ashish-khokhar) <br>Confirmed working |
-| 2026-09-17 | <img src="../assets/threeseed-front.jpg" width="180" alt="Threeseed's LED-side PCB marked Zone Switch Touchpad V2.40 and 20190813"> | Not yet available | Front: **Zone Switch Touchpad V2.40**<br>Back: **Unconfirmed** | `20190813` (13 August 2019); meaning unconfirmed. Installation unknown. | [@threeseed](https://github.com/threeseed) · [Photo](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5706901948) · [Working configuration](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5018118560) <br>Confirmed working |
+| 2026-03-08 | <img src="../assets/ashish-front.jpeg" width="180" alt="Ashish's LED-side PCB marked Zone Switch Touchpad V2.40 and 20190813"> | <img src="../assets/v2.1.png" width="180" alt="Rear of Ashish's PCB marked SMD Version V2.1 beside the RJ12 connector"> | Front: **Zone Switch Touchpad V2.40**<br>Back: **SMD Version V2.1** | `20190813` (13 August 2019); meaning unconfirmed. Installation unknown. | [@ashish-khokhar](https://github.com/ashish-khokhar) <br>Confirmed working |
+| 2026-07-20 | <img src="../assets/threeseed-front.jpg" width="180" alt="Threeseed's LED-side PCB marked Zone Switch Touchpad V2.40 and 20190813"> | Not yet available | Front: **Zone Switch Touchpad V2.40**<br>Back: **Unconfirmed** | `20190813` (13 August 2019); meaning unconfirmed. Installation unknown. | [@threeseed](https://github.com/threeseed) · [Photo](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5706901948) · [Working configuration](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5018118560) <br>Confirmed working |
 
 Ashish's board carries both **V2.40 on the front** and **V2.1 on the back**.
 These markings therefore do not necessarily identify different hardware models.
@@ -50,7 +54,7 @@ Follow the [V1.0-T setup guide](../guides/v1.0-t.md).
 
 | Date added | Front (LEDs) | Back (RJ12) | PCB markings | Printed date / installation | Contributor / status |
 |---|---|---|---|---|---|
-| 2026-09-17 | <img src="../assets/v1.0-t-front.png" width="180" alt="LED and button side of Jourdant's V1.0-T wall controller"> | <img src="../assets/v1.0-t.png" width="180" alt="Rear PCB marked Zone Switch V1.0-T and 13/12 beside the RJ12 connector"> | Front: **No version marking visible**<br>Back: **Zone Switch V1.0-T** | `13/12` (date format unconfirmed); installed in **2014**, as reported by the owner. | [@jourdant](https://github.com/jourdant) <br>Software control confirmed; experimental |
+| 2026-03-08 | <img src="../assets/v1.0-t-front.png" width="180" alt="LED and button side of Jourdant's V1.0-T wall controller"> | <img src="../assets/v1.0-t.png" width="180" alt="Rear PCB marked Zone Switch V1.0-T and 13/12 beside the RJ12 connector"> | Front: **No version marking visible**<br>Back: **Zone Switch V1.0-T** | `13/12` (date format unconfirmed); installed in **2014**, as reported by the owner. | [@jourdant](https://github.com/jourdant) <br>Software control confirmed; experimental |
 
 ## Contribute a compatibility report
 
