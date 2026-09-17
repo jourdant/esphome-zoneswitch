@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../zoneswitch.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/core/component.h"
-#include "../zoneswitch.h"
 
 namespace esphome {
 namespace zoneswitch {
@@ -12,13 +12,19 @@ enum DiagnosticMetric {
   DIAGNOSTIC_METRIC_ONLINE = 1,
   DIAGNOSTIC_METRIC_RX_OK = 2,
   DIAGNOSTIC_METRIC_RX_BAD = 3,
+  DIAGNOSTIC_METRIC_STATUS_AGE,
+  DIAGNOSTIC_METRIC_TX_COUNT,
+  DIAGNOSTIC_METRIC_ACK_TIMEOUTS,
+  DIAGNOSTIC_METRIC_RESPONSE_TIMEOUTS,
+  DIAGNOSTIC_METRIC_REJECTED_BUSY,
+
 };
 
 class ZoneSwitch;
 
 class ZoneSwitchDiagnosticSensor : public sensor::Sensor, public Component, public ZoneSwitchDiagnosticListener {
  public:
-  void set_parent(ZoneSwitch *parent) { this->parent_ = parent; }
+  void set_parent(ZoneSwitch* parent) { this->parent_ = parent; }
   void set_metric(DiagnosticMetric metric) { this->metric_ = metric; }
 
   void on_diagnostics_update(uint8_t node_addr, bool online, uint32_t rx_ok_count, uint32_t rx_bad_count) override;
@@ -27,7 +33,7 @@ class ZoneSwitchDiagnosticSensor : public sensor::Sensor, public Component, publ
  protected:
   void publish_if_changed_(float state);
 
-  ZoneSwitch *parent_{nullptr};
+  ZoneSwitch* parent_{nullptr};
   DiagnosticMetric metric_{DIAGNOSTIC_METRIC_NODE_ADDRESS};
   bool has_published_state_{false};
   float last_published_state_{0.0f};

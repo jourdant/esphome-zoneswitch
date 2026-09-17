@@ -1,0 +1,25 @@
+name: Hardware revision or protocol capture
+description: Document a different PCB or contribute captured traffic.
+title: "[Hardware]: "
+body:
+  - type: textarea
+    id: identity
+    attributes:
+      label: Board identification
+      description: Printed PCB marking and photos of both sides; mask unrelated identifying labels if desired. Do not rely on socket color.
+    validations:
+      required: true
+  - type: textarea
+    id: capture
+    attributes:
+      label: Capture and setup
+      description: Original bytes/timestamps, UART settings, adapter/pins, firmware ref, passive or active, and known transmitter attribution.
+    validations:
+      required: true
+  - type: textarea
+    id: actions
+    attributes:
+      label: Physical actions and observations
+      description: Initial LEDs, exact button sequence, final LEDs and known installed zones. Separate observations from hypotheses.
+    validations:
+      required: true

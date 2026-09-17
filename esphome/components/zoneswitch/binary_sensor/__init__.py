@@ -1,7 +1,8 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import binary_sensor
 from esphome.const import CONF_ID
+
+from esphome.components import binary_sensor
 
 from .. import ZoneSwitch, zoneswitch_ns
 
@@ -40,7 +41,9 @@ def _validate_binary_sensor_config(config):
     has_metric = CONF_METRIC in config
 
     if has_zone == has_metric:
-        raise cv.Invalid("Exactly one of 'zone' or 'metric' must be set for zoneswitch binary_sensor")
+        raise cv.Invalid(
+            "Exactly one of 'zone' or 'metric' must be set for zoneswitch binary_sensor"
+        )
 
     return config
 

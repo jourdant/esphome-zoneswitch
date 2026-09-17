@@ -28,13 +28,13 @@ Credentials are loaded from the repo root `.env`:
 From the repo root:
 
 ```bash
-uv run --no-project python tools/azure_docint_to_markdown.py docs/research/zoneswitch/ZoneSwitchV2_OpInstallationManual2015_12x17.pdf -o docs/research/zoneswitch/ZoneSwitchV2_OpInstallationManual2015_12x17.md
+uv run --no-project python tools/azure_docint_to_markdown.py docs/research/ZoneSwitchV2_OpInstallationManual2015_12x17.pdf -o docs/research/ZoneSwitchV2_OpInstallationManual2015_12x17.md
 ```
 
 For the screenshot/image:
 
 ```bash
-uv run --no-project python tools/azure_docint_to_markdown.py "docs/research/zoneswitch/Screenshot 2026-03-08 at 7.53.07 PM.png" -o docs/research/zoneswitch/screenshot_ocr.md
+uv run --no-project python tools/azure_docint_to_markdown.py "docs/research/Screenshot 2026-03-08 at 7.53.07 PM.png" -o docs/research/screenshot_ocr.md
 ```
 
 ## Outputs
@@ -51,3 +51,9 @@ For each input, the script writes:
 - `--format markdown|text`
 - `--poll-interval 1.0`
 - `--timeout 300`
+
+## Protocol versions
+
+`zoneswitch_checksum_solver.py` analyses **V2** CRC-8/MAXIM captures in
+`docs/research/v2/captures/`. It does not decode V1 handshakes or their candidate
+additive checksum. V1 evidence lives in `docs/research/v1/`.

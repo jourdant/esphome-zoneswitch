@@ -247,9 +247,9 @@ def main() -> int:
         "captures",
         nargs="*",
         default=[
-            "docs/research/protocol/saved_rs485_packets.md",
-            "docs/research/protocol/saved_rs485_packets2.md",
-            "docs/research/protocol/saved_rs485_packets3.md",
+            "docs/research/v2/captures/saved_rs485_packets.md",
+            "docs/research/v2/captures/saved_rs485_packets2.md",
+            "docs/research/v2/captures/saved_rs485_packets3.md",
         ],
         help="Capture markdown/text files containing UART hex lines.",
     )

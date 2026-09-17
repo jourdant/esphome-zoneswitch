@@ -23,3 +23,11 @@ venv/
 # Editor
 .vscode/*
 !.vscode/.gitignore
+
+.vexp
+.github/*
+!.github/ISSUE_TEMPLATE/
+# Local ESPHome build products and private device configuration
+.esphome/
+secrets.yaml
+*.private.yaml

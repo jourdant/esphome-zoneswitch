@@ -1,14 +1,15 @@
 #pragma once
 
+#include "../zoneswitch.h"
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/core/component.h"
-#include "../zoneswitch.h"
 
 namespace esphome {
 namespace zoneswitch {
 
 enum TextSensorMetric {
   TEXT_SENSOR_METRIC_NODE_ADDRESS = 0,
+  TEXT_SENSOR_METRIC_TRANSACTION_RESULT,
 };
 
 enum TextSensorFormat {
@@ -20,7 +21,7 @@ class ZoneSwitch;
 
 class ZoneSwitchTextSensor : public text_sensor::TextSensor, public Component, public ZoneSwitchDiagnosticListener {
  public:
-  void set_parent(ZoneSwitch *parent) { this->parent_ = parent; }
+  void set_parent(ZoneSwitch* parent) { this->parent_ = parent; }
   void set_metric(TextSensorMetric metric) { this->metric_ = metric; }
   void set_format(TextSensorFormat format) { this->format_ = format; }
 
@@ -28,13 +29,14 @@ class ZoneSwitchTextSensor : public text_sensor::TextSensor, public Component, p
   void dump_config() override;
 
  protected:
-  void publish_if_changed_(uint8_t node_addr, const char *state);
+  void publish_if_changed_(uint8_t node_addr, const char* state);
 
-  ZoneSwitch *parent_{nullptr};
+  ZoneSwitch* parent_{nullptr};
   TextSensorMetric metric_{TEXT_SENSOR_METRIC_NODE_ADDRESS};
   TextSensorFormat format_{TEXT_SENSOR_FORMAT_HEX};
   bool has_published_state_{false};
   uint8_t last_published_node_addr_{0};
+  const char* last_result_{nullptr};
 };
 
 }  // namespace zoneswitch

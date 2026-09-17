@@ -1,8 +1,16 @@
-# Polyaire ZoneSwitch V2 Protocol Spec (Draft)
+# Polyaire ZoneSwitch V2 protocol
+
+**Confirmed fully working on V2.1 hardware; the default protocol.**
+The owner confirmed this support on 2026-09-17. Historical experiments below
+remain evidence for individual fields; their earlier open tasks do not imply
+that standard zone control is still unimplemented.
+
+[Setup guide](../../../guides/v2.1.md) · [Research sources](../../../research/README.md)
 
 ## Scope and confidence
 
 This document combines:
+
 - Installation manual OCR: `ZoneSwitchV2_OpInstallationManual2015_12x17.md`
 - Diagram OCR: `screenshot_ocr.md`
 - Bus capture: `saved_rs485_packets.md`
@@ -10,6 +18,7 @@ This document combines:
 - Component TX/debug capture: `saved_rs485_packets3.md`
 
 Confidence legend:
+
 - **Confirmed**: directly observed in manual or packet data
 - **High-confidence inference**: strongly supported by repeated packet patterns
 - **Hypothesis**: plausible, needs active testing
@@ -149,69 +158,33 @@ not a full desired mask write.
 - This model matched all raw frames from both captures (`saved_rs485_packets.md` and `saved_rs485_packets2.md`) with 100% accuracy.
 - It also matches all 14 component-generated poll checksums in `saved_rs485_packets3.md` for `AA 00 48 SEQ 01 00 00 CHK 55`.
 
-## Practical protocol model for implementation
+## Current component behavior
 
-## Passive decode mode (implement now)
+The driver accepts fixed nine-byte frames, checks AA/55 markers and CRC-8/MAXIM,
+and learns the node/response ARG0 pair from repeated matching status frames.
+Three confirmations are required by default. A persisted address is an untrusted
+candidate until fresh traffic confirms it. Status mask bits map to zones 1–6.
 
-- Accept fixed 9-byte frames with `AA`/`55` markers.
-- Validate frame family by bytes `[1,2,4,5]`.
-- Use response `[6]` as zone bitmask candidate.
-- Track current zone states and expose 6 zone entities.
+Absolute ON/OFF requests are translated to the required toggle bit relative to
+received state. Writes are gated on valid online status. Missing write replies
+require fresh state before another toggle; a status with a different sequence
+can update passive state but does not acknowledge a pending write.
 
-This can be implemented immediately in ESPHome as read-only status.
+Polling defaults to five seconds. `listen_only: true` suppresses every component
+transmission, including refresh and control, while reception and node learning
+continue. See the [configuration reference](../../../configuration.md) for address,
+status-age, miss-threshold, spill-zone and diagnostic settings.
 
-## Active control mode (unlocked)
+The third saved capture predates node autodetection: its zero node diagnostic
+is historical, not the expected current behavior after valid traffic is learned.
+The V2 software refactor retains the established wire behavior; its software
+checks and hardware evidence are recorded separately in
+[validation](../../../research/validation/2026-09-17.md).
 
-To command zone on/off from ESPHome, these items are now known:
-- Outbound command opcode uses request `CMD=0x01`.
-- Outbound payload uses `ARG1` as toggle-bit (zone button semantics).
-- Outbound checksum uses CRC-8/MAXIM over bytes `[1..6]`.
+## Further evidence to collect
 
-`saved_rs485_packets3.md` confirms the component can generate protocol-valid
-idle poll frames for `NODE=0x48`. Because this capture predates the
-auto-detection PR, the logged `ZoneSwitch Node Address` value staying at `0`
-should not be treated as current expected behavior. Retest with the
-auto-detection change and expect the learned node to update when valid
-controller traffic is present.
-
-## Touchpad2 emulation approach (high-confidence design)
-
-Goal: plug ESPHome hardware into **T2** and emulate a second touchpad.
-
-Recommended staged approach:
-
-1. **Passive parallel sniff** on T2 traffic first.
-2. Confirm idle poll/status identical whether 1 or 2 physical touchpads are connected.
-3. Confirm auto-detection learns the node address from controller traffic.
-4. Capture traffic while pressing each zone on real touchpad (single press, long press, combos).
-5. Derive write command(s) and checksum.
-6. Enable ESPHome TX with collision-avoidance timing.
-
-Electrical guidance:
-- Use RS485 transceiver with receiver always enabled.
-- Keep TX disabled by default; enable only for short command burst windows.
-- Require a quiet inter-frame window before asserting TX.
-- Share ground reference with controller side.
-- Validate line polarity (A/B) and idle bias before enabling TX.
-
-## Minimal experiment matrix to finish the spec
-
-Capture each case with timestamps and frame hex:
-- Baseline idle (already done)
-- Press Z1 once, wait 10 s
-- Press same zone again
-- Repeat for Z2..Z6
-- Trigger touchpad off combo (Z3+Z4 >2 s)
-- Trigger spill-zone set action (hold 5 s)
-- Repeat with spill DIP OFF vs ON
-
-Expected result:
-- Isolate command family and payload encoding
-- Solve checksum by fitting across mixed command data
-- Confirm bit-to-zone mapping
-
-## ESPHome deliverable split
-
-- **Phase 1**: read-only status integration (zone bitmask decode)
-- **Phase 2**: write support with known command semantics (toggle bit) and CRC-8/MAXIM checksum
-- **Phase 3**: full Touchpad2 emulation behavior parity (combos/LED behavior)
+Response ARG0 values other than 0x01 and additional board revisions need their
+own captures before compatibility is claimed. Button combinations, spill-zone
+configuration actions and behavior with multiple physical touchpads are useful
+additional traces. The original [touchpad investigation plan](touchpad2-plan.md)
+is retained as historical research; it is not a prerequisite for standard V2 setup.

@@ -1,0 +1,122 @@
+# Fragment: merge into an ESP32-S3 / ESP-IDF device configuration.
+# GPIO assignments are for the XIAO carrier.
+external_components:
+- source:
+    type: git
+    url: https://github.com/jourdant/esphome-zoneswitch
+    ref: main
+  components:
+  - zoneswitch
+  refresh: 0s
+uart:
+- id: zoneswitch_uart
+  tx_pin: GPIO43
+  rx_pin: GPIO44
+  baud_rate: 250000
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  rx_buffer_size: 256
+  rx_full_threshold: 1
+  flush_timeout: 100ms
+zoneswitch:
+- id: zs_bus
+  uart_id: zoneswitch_uart
+  protocol: v1
+  # Set true for passive commissioning (suppresses startup/refresh/control too).
+  listen_only: false
+  flow_control_pin: GPIO4
+  enable_polling: false
+  status_timeout: 0s
+  tx_idle_guard: 20ms
+  spill_zone: 0
+  debug: true
+switch:
+- platform: zoneswitch
+  id: zone_1_switch
+  zoneswitch_id: zs_bus
+  zone: 1
+  name: ZoneSwitch Zone 1
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_2_switch
+  zoneswitch_id: zs_bus
+  zone: 2
+  name: ZoneSwitch Zone 2
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_3_switch
+  zoneswitch_id: zs_bus
+  zone: 3
+  name: ZoneSwitch Zone 3
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_4_switch
+  zoneswitch_id: zs_bus
+  zone: 4
+  name: ZoneSwitch Zone 4
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_5_switch
+  zoneswitch_id: zs_bus
+  zone: 5
+  name: ZoneSwitch Zone 5
+  icon: mdi:air-filter
+- platform: zoneswitch
+  id: zone_6_switch
+  zoneswitch_id: zs_bus
+  zone: 6
+  name: ZoneSwitch Zone 6
+  icon: mdi:air-filter
+sensor:
+- platform: zoneswitch
+  id: zoneswitch_rx_ok
+  zoneswitch_id: zs_bus
+  metric: rx_ok
+  name: ZoneSwitch RX OK
+  icon: mdi:counter
+- platform: zoneswitch
+  id: zoneswitch_rx_bad
+  zoneswitch_id: zs_bus
+  metric: rx_bad
+  name: ZoneSwitch RX Bad
+  icon: mdi:counter
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: status_age
+  name: ZoneSwitch Status age
+  entity_category: diagnostic
+  unit_of_measurement: s
+  accuracy_decimals: 1
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: ack_timeouts
+  name: ZoneSwitch ACK timeouts
+  entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: response_timeouts
+  name: ZoneSwitch Response timeouts
+  entity_category: diagnostic
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: rejected_busy
+  name: ZoneSwitch Busy requests
+  entity_category: diagnostic
+binary_sensor:
+- platform: zoneswitch
+  id: zoneswitch_online_status
+  zoneswitch_id: zs_bus
+  metric: online
+  name: ZoneSwitch Gateway Online
+  icon: mdi:lan-connect
+button:
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  name: Refresh zone state
+text_sensor:
+- platform: zoneswitch
+  zoneswitch_id: zs_bus
+  metric: transaction_result
+  name: ZoneSwitch transaction result
+  entity_category: diagnostic
