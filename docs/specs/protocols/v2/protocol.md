@@ -1,6 +1,6 @@
 # Polyaire ZoneSwitch V2 protocol
 
-**Confirmed fully working on V2.1 hardware; the default protocol.**
+**Confirmed fully working on the [reported V2 boards](../../../hardware/compatibility.md#protocol-v2--9600-baud); the default protocol.**
 The owner confirmed this support on 2026-09-17. Historical experiments below
 remain evidence for individual fields; their earlier open tasks do not imply
 that standard zone control is still unimplemented.

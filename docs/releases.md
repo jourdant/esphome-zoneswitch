@@ -1,8 +1,10 @@
 # Releases
 
 Use project tags such as `v0.2.0-rc.1` or `v0.2.0`. They identify a complete
-component revision, not a wire protocol. V1.0-T/V2.1 are hardware revisions;
-`protocol: v1`/`v2` are configuration choices.
+component revision, not a wire protocol. V1.0-T, V2.1 and V2.40 are printed PCB
+markings, which can differ between the two sides of one board;
+`protocol: v1`/`v2` are configuration choices. See the
+[compatibility reports](hardware/compatibility.md) for tested combinations.
 
 ## Prepare an immutable release
 

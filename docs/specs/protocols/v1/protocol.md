@@ -3,7 +3,7 @@
 ## Evidence
 
 Bench captures on 2026-09-16 established 250000 baud, 8N1, noninverted UART.
-The PCB marking is V1.0-T; this is separate from the V2.1 protocol.
+The PCB marking is V1.0-T; this board uses the V1 protocol, distinct from V2.
 [All zones](../../../research/v1/2026-09-16_user-all-six-zones.md),
 [startup](../../../research/v1/2026-09-16_startup-captures.md), and
 [acknowledged software transactions](../../../research/v1/2026-09-16_direct-fifo-results.md)

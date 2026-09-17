@@ -1,7 +1,7 @@
 # ESPHome ZoneSwitch
 
 Connect a Polyaire ZoneSwitch controller to Home Assistant through RS485.
-**V2 is the default and is confirmed fully working on V2.1 hardware.**
+**V2 is the default and is confirmed fully working on the boards listed below.**
 V1 supports software control on V1.0-T hardware, with a known wall-panel limitation.
 
 <p align="center">
@@ -13,16 +13,23 @@ ZoneSwitch zone controls, with room names configured for this installation.*
 
 ## Identify your wall controller
 
-Read the revision printed on the **back of the wall PCB**. These are the two
-revisions identified and tested so far; socket appearance alone is not identification.
+Check the markings on **both sides of the wall PCB**. Ashish's tested V2 board
+reads **Touchpad V2.40 on the front (LED side)** and **SMD Version V2.1 on the
+back (RJ12 side)**. These are two markings on the same board, not necessarily
+different hardware models. Socket appearance alone is not identification.
 
-| V1.0-T | V2.1 |
+| V1 hardware | V2 hardware |
 |:---:|:---:|
 | <img src="docs/assets/v1.0-t.png" width="260" alt="Wall PCB marked Zone Switch V1.0-T 13/12"> | <img src="docs/assets/v2.1.png" width="260" alt="Wall PCB marked SMD Version V2.1"> |
-| Marking: **Zone Switch V1.0-T** | Marking: **SMD Version V2.1** |
+| Back: **Zone Switch V1.0-T** | Back: **SMD Version V2.1** · Front: **Touchpad V2.40** |
 | `protocol: v1` · **250000 baud** | `protocol: v2` · **9600 baud** |
 | Experimental: software control works; wall LEDs can stay stale and buttons can temporarily stop responding after external traffic | **Confirmed fully working**; selected when `protocol` is omitted |
-| **[V1.0-T setup guide →](docs/guides/v1.0-t.md)** | **[V2.1 setup guide →](docs/guides/v2.1.md)** |
+| **[V1.0-T setup guide →](docs/guides/v1.0-t.md)** | **[V2 setup guide →](docs/guides/v2.1.md)** |
+
+The [known compatible boards](docs/hardware/compatibility.md) document includes
+front/back photographs, date markings and contributor confirmations, including
+@threeseed's working V2 board. Printed dates are recorded without assuming they
+are manufacturing dates.
 
 For a different or unreadable marking, collect the PCB revision and a passive
 capture before choosing a protocol. A matching connector does not establish its pinout.
@@ -41,6 +48,7 @@ received controller state; they do not measure airflow.
 
 | Looking for… | Start here |
 |---|---|
+| Board photos, version markings and compatibility reports | [Known compatible boards](docs/hardware/compatibility.md) |
 | UART settings, entities, listen-only mode and diagnostics | [Configuration reference](docs/configuration.md) |
 | A complete device config or a fragment to merge | [Examples](esphome/examples/README.md) |
 | Packet formats, timing and evidence | [Protocol specifications](docs/specs/protocols/README.md) |
@@ -61,3 +69,4 @@ Here's a list of contributors in no particular order.
 
 - [@jourdant](https://github.com/jourdant)
 - [@ashish-khokhar](https://github.com/ashish-khokhar)
+- [@threeseed](https://github.com/threeseed)

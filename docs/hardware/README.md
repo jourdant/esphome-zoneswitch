@@ -1,7 +1,8 @@
 # Hardware identification and wiring
 
-Start with the [revision photographs](../../README.md#identify-your-wall-controller),
-then follow the [V1.0-T](../guides/v1.0-t.md) or [V2.1](../guides/v2.1.md) guide.
+Start with the [known compatible boards](compatibility.md), including photographs
+of both sides and contributor confirmations, then follow the
+[V1.0-T](../guides/v1.0-t.md) or [V2](../guides/v2.1.md) guide.
 The [V2 installation gallery](v2.md) preserves the original adapter wiring photos.
 
 The photos establish board identity. They do not establish a common RJ12 pinout
