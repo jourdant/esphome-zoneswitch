@@ -1,4 +1,4 @@
-# Known compatible boards
+# Board identification and compatibility
 
 Identify your wall controller using the markings on both sides of its PCB.
 **Front** means the LED/button side; **back** means the RJ12 connector side.
@@ -6,7 +6,8 @@ Identify your wall controller using the markings on both sides of its PCB.
 PCB version markings can differ between the front and back of the same board.
 Record both when identifying your hardware. Protocol compatibility below reflects
 tested boards; printed version numbers and dates alone do not establish compatibility.
-Each row records a contributor's tested board, not necessarily a distinct revision.
+Each row records a contributor's reported board, not necessarily a distinct revision.
+Confirmed boards are grouped by protocol; boards awaiting testing are listed separately.
 
 ## Protocol V2 — 9600 baud
 
@@ -36,6 +37,21 @@ Follow the [V1.0-T setup guide](../guides/v1.0-t.md).
 | Front (LEDs) | Back (RJ12) | PCB markings | Printed date / installation | Confirmed by |
 |---|---|---|---|---|
 | <img src="../assets/v1.0-t-front.png" width="180" alt="LED and button side of Jourdant's V1.0-T wall controller"> | <img src="../assets/v1.0-t.png" width="180" alt="Rear PCB marked Zone Switch V1.0-T and 13/12 beside the RJ12 connector"> | Front: **No version marking visible**<br>Back: **Zone Switch V1.0-T** | `13/12` (date format unconfirmed); installed in **2014**, as reported by the owner. | [@jourdant](https://github.com/jourdant) |
+
+## Awaiting protocol confirmation
+
+These photographs identify hardware, but do not yet establish ESPHome compatibility.
+
+| Front (LEDs) | Back (RJ12) | PCB markings | Printed date / installation | Contributed by |
+|---|---|---|---|---|
+| <img src="../assets/mattaustin-front.jpg" width="180" alt="Mattaustin's LED-side PCB marked Zone Switch Touch Pad V2.3 and 2015.06"> | <img src="../assets/mattaustin-back.jpg" width="180" alt="Rear of Mattaustin's PCB with the modular connector and no visible version marking; contributor-redacted labels preserved"> | Front: **Zone Switch Touch Pad V2.3**<br>Back: **No version marking visible** | `2015.06` (June 2015); meaning unconfirmed. Installation unknown. | [@mattaustin](https://github.com/mattaustin) · [Photos and report](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5710688310) |
+
+At the time of the report, @mattaustin had not connected an ESPHome adapter and was
+gathering components. The [maintainer's reply](https://github.com/jourdant/esphome-zoneswitch/issues/8#issuecomment-5710800326)
+suggests V2 as the expected protocol, but neither the protocol nor its baud rate
+has been confirmed on this board. Its printed date is not a verified manufacturing
+or installation date. The front and back photos are the contributor's original
+second and first attachments respectively; existing label redactions are preserved.
 
 ## Contribute a compatibility report
 
