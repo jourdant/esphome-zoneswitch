@@ -30,7 +30,7 @@ The [board identification and compatibility](docs/hardware/compatibility.md) doc
 front/back photographs, date markings and contributor confirmations, including
 @threeseed's working V2 board. Printed dates are recorded without assuming they
 are manufacturing dates. Boards awaiting testing, such as @mattaustin's Touch Pad
-V2.3, are listed separately from confirmed compatibility reports.
+V2.3, are explicitly marked as unconfirmed within their expected protocol group.
 
 For a different or unreadable marking, collect the PCB revision and a passive
 capture before choosing a protocol. A matching connector does not establish its pinout.
